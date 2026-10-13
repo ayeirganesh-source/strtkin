@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ShoppingBag, ShieldCheck, Truck, Check } from "lucide-react";
+import { useCart } from "@/app/context/CartContext"; // <-- Import useCart
 
 const ALL_PRODUCTS = [
   {
@@ -52,6 +53,7 @@ function ProductDetailContent() {
   const params = useParams();
   const router = useRouter();
   const productId = params.id as string;
+  const { addToCart } = useCart(); // <-- Initialize useCart hook
 
   const product = ALL_PRODUCTS.find((p) => p.id === productId) || ALL_PRODUCTS[0];
 
@@ -59,6 +61,16 @@ function ProductDetailContent() {
   const [added, setAdded] = useState(false);
 
   const handleAddToCart = () => {
+    // Add item to global cart context and localStorage
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      size: selectedSize,
+      image: product.image,
+    });
+
     setAdded(true);
     setTimeout(() => {
       router.push("/cart");
