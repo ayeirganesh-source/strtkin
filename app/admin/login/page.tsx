@@ -12,12 +12,11 @@ export default function AdminLoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple secure check for admin middleman workflow
     if (username === "admin" && password === "strtkin2026") {
       localStorage.setItem("strtkin_admin_auth", "true");
       router.push("/admin/orders");
     } else {
-      setError("Invalid credentials. Try admin / strtkin2026");
+      setError("Invalid username or password.");
     }
   };
 
@@ -42,7 +41,7 @@ export default function AdminLoginPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                placeholder="Enter username"
                 className="w-full pl-10 pr-4 py-2.5 border border-neutral-300 text-sm focus:outline-none focus:border-black bg-white"
               />
             </div>
@@ -72,10 +71,6 @@ export default function AdminLoginPage() {
             Sign In <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        <div className="text-center pt-2 border-t border-neutral-200">
-          <p className="text-[11px] text-neutral-400">Default Credentials: <span className="font-semibold text-neutral-600">admin</span> / <span className="font-semibold text-neutral-600">strtkin2026</span></p>
-        </div>
       </div>
     </div>
   );
