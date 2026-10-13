@@ -15,13 +15,16 @@ export const DEFAULT_PRODUCTS = [
 
 export function getStoredProducts() {
   if (typeof window === "undefined") return DEFAULT_PRODUCTS;
+  
   const saved = localStorage.getItem("strtkin_products");
   if (!saved) {
     localStorage.setItem("strtkin_products", JSON.stringify(DEFAULT_PRODUCTS));
     return DEFAULT_PRODUCTS;
   }
+  
   try {
     const parsed = JSON.parse(saved);
+    // Return saved products even if empty array so it doesn't revert to default
     return parsed;
   } catch (e) {
     return DEFAULT_PRODUCTS;
@@ -31,6 +34,5 @@ export function getStoredProducts() {
 export function saveStoredProducts(products: any[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem("strtkin_products", JSON.stringify(products));
-  // Notify other components/tabs immediately
   window.dispatchEvent(new Event("strtkin_products_updated"));
 }
