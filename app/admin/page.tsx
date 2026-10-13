@@ -2,446 +2,387 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Trash2,
-  Plus,
-  Edit,
-  ShoppingBag,
-  Package,
-  X,
-  Upload,
-  Lock,
-  LogOut,
-} from "lucide-react";
-import { getStoredProducts, saveStoredProducts } from "../lib/products";
+import { ArrowLeft, Plus, Trash2, Package, ShoppingBag, DollarSign, CheckCircle } from "lucide-react";
+import { getStoredProducts, saveStoredProducts } from "@/app/lib/products";
 
-export default function AdminDashboardPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [usernameInput, setUsernameInput] = useState("");
-  const [passwordInput, setPasswordInput] = useState("");
-  const [loginError, setLoginError] = useState("");
-
-  const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("PRODUCTS");
-  const [orders, setOrders] = useState<any[]>([]);
+export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState<"orders" | "products">("orders");
   const [products, setProducts] = useState<any[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "t-shirts",
-    price: "",
-    originalPrice: "",
-    description: "",
-    sizes: "M, L, XL",
-    images: [] as string[],
-  });
+  // New product form state
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+  const [category, setCategory] = useState("TEES");
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState("");
 
-  useEffect(() => {
-    const authStatus = sessionStorage.getItem("strtkin_admin_auth");
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
-    }
-  }, []);
+  const loadAdminData = () => {
+    // Load products
+    setProducts(getStoredProducts());
 
-  useEffect(() => {
-    const savedOrders = localStorage.getItem("strtkin_orders");
-    if (savedOrders) {
-      try {
-        setOrders(JSON.parse(savedOrders));
-      } catch (e) {
-        console.error("Failed to parse orders", e);
+    // Load orders
+    if (typeof window !== "undefined") {
+      const storedOrders = localStorage.getItem("strtkin_orders");
+      if (storedOrders) {
+        try {
+          setOrders(JSON.parse(storedOrders));
+        } catch (e) {
+          setOrders([]);
+        }
+      } else {
+        // Fallback sample order if empty
+        setOrders([
+          {
+            id: "ORD-1001",
+            date: new Date().toLocaleDateString(),
+            customer: "Arjun Verma",
+            phone: "+91 98765 43210",
+            address: "Bandra West, Mumbai, MH",
+            items: [{ name: '"Madness" Oversized Tee', size: "L", quantity: 1, price: 799 }],
+            total: 799,
+            status: "PROCESSING",
+          },
+        ]);
       }
     }
+  };
 
-    setProducts(getStoredProducts());
+  useEffect(() => {
+    loadAdminData();
+
+    window.addEventListener("strtkin_products_updated", loadAdminData);
+    window.addEventListener("storage", loadAdminData);
+
+    return () => {
+      window.removeEventListener("strtkin_products_updated", loadAdminData);
+      window.removeEventListener("storage", loadAdminData);
+    };
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (usernameInput === "admin" && passwordInput === "strtkin2026") {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("strtkin_admin_auth", "true");
-      setLoginError("");
-    } else {
-      setLoginError("Invalid username or password credentials.");
-    }
-  };
+    if (!name || !price) return;
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem("strtkin_admin_auth");
-  };
+    const imgArray = images
+      ? images.split(",").map((s) => s.trim())
+      : ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"];
 
-  const openCreateModal = () => {
-    setEditingProduct(null);
-    setFormData({
-      name: "",
-      category: "t-shirts",
-      price: "",
-      originalPrice: "",
-      description: "",
-      sizes: "M, L, XL",
-      images: [],
-    });
-    setIsModalOpen(true);
-  };
+    const newProduct = {
+      id: String(Date.now()),
+      name,
+      price: Number(price),
+      originalPrice: originalPrice ? Number(originalPrice) : undefined,
+      category,
+      description: description || "Heavyweight drop-shoulder street silhouette cut for maximum comfort.",
+      image: imgArray[0],
+      images: imgArray,
+      sizes: ["S", "M", "L", "XL"],
+    };
 
-  const openEditModal = (product: any) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      price: String(product.price),
-      originalPrice: String(product.originalPrice || ""),
-      description: product.description || "",
-      sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes,
-      images: product.images || (product.image ? [product.image] : []),
-    });
-    setIsModalOpen(true);
+    const updated = [newProduct, ...products];
+    setProducts(updated);
+    saveStoredProducts(updated);
+
+    // Reset Form
+    setName("");
+    setPrice("");
+    setOriginalPrice("");
+    setDescription("");
+    setImages("");
   };
 
   const handleDeleteProduct = (id: string) => {
-    if (confirm("Are you sure you want to delete this product from your storefront?")) {
-      const updated = products.filter((p) => p.id !== id);
-      setProducts(updated);
-      saveStoredProducts(updated);
-    }
+    const updated = products.filter((p) => String(p.id) !== String(id));
+    setProducts(updated);
+    saveStoredProducts(updated);
   };
 
-  const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const readers: Promise<string>[] = Array.from(files).map((file) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-      });
-
-      Promise.all(readers).then((newImages) => {
-        setFormData((prev) => ({
-          ...prev,
-          images: [...prev.images, ...newImages],
-        }));
-      });
-    }
-  };
-
-  const removeImageAt = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSaveProduct = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const formattedProduct = {
-      id: editingProduct ? editingProduct.id : String(Date.now()),
-      name: formData.name,
-      category: formData.category.toLowerCase(),
-      price: Number(formData.price),
-      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.5,
-      description: formData.description,
-      sizes: formData.sizes.split(",").map((s) => s.trim()),
-      images: formData.images,
-      image: formData.images[0] || "",
-    };
-
-    let updatedProducts;
-    if (editingProduct) {
-      updatedProducts = products.map((p) => (p.id === editingProduct.id ? formattedProduct : p));
-    } else {
-      updatedProducts = [formattedProduct, ...products];
-    }
-
-    setProducts(updatedProducts);
-    saveStoredProducts(updatedProducts);
-    setIsModalOpen(false);
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full border border-neutral-800 bg-neutral-950 p-8 space-y-6">
-          <div className="text-center space-y-2">
-            <Lock className="w-10 h-10 text-[#FF5500] mx-auto" />
-            <h1 className="text-2xl font-black uppercase tracking-tight">ADMIN ACCESS PORTAL</h1>
-            <p className="text-xs text-neutral-400">Enter secure administrative credentials to proceed.</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">USERNAME</label>
-              <input
-                type="text"
-                required
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                placeholder="admin"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">PASSWORD</label>
-              <input
-                type="password"
-                required
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full bg-neutral-900 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {loginError && <p className="text-xs text-red-500 font-semibold">{loginError}</p>}
-
-            <button
-              type="submit"
-              className="w-full bg-[#FF5500] text-white text-xs font-black uppercase tracking-widest py-4 hover:bg-[#e04b00] transition"
-            >
-              UNLOCK ADMIN DASHBOARD
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
+  const totalRevenue = orders.reduce((sum, ord) => sum + Number(ord.total || 0), 0);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-neutral-800 gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        
+        {/* Header Control Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-neutral-800 pb-6 gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
               <Link
                 href="/shop"
-                className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-[#FF5500] flex items-center gap-1.5 transition"
+                className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-[#FF5500] transition flex items-center gap-1"
               >
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Storefront
+                <ArrowLeft className="w-3.5 h-3.5" /> BACK TO STOREFRONT
               </Link>
-              <span className="text-neutral-700">/</span>
-              <span className="text-[10px] font-black uppercase tracking-widest bg-[#FF5500] text-white px-2 py-0.5">
-                Admin Control Room
+              <span className="text-neutral-600">/</span>
+              <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-2 py-0.5">
+                ADMIN CONTROL ROOM
               </span>
             </div>
-            <h1 className="text-4xl font-black uppercase tracking-tight text-white">
-              STRTKIN Control Center
+            <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white">
+              STRTKIN CONTROL CENTER
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex bg-neutral-900 border border-neutral-800 p-1">
-              <button
-                onClick={() => setActiveAdminTab("ORDERS")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                  activeAdminTab === "ORDERS"
-                    ? "bg-[#FF5500] text-white shadow-lg"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                <ShoppingBag className="w-4 h-4" /> Orders ({orders.length})
-              </button>
-              <button
-                onClick={() => setActiveAdminTab("PRODUCTS")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                  activeAdminTab === "PRODUCTS"
-                    ? "bg-[#FF5500] text-white shadow-lg"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                <Package className="w-4 h-4" /> Products ({products.length})
-              </button>
-            </div>
+          {/* Tab Navigation Buttons */}
+          <div className="flex items-center gap-2 bg-neutral-950 p-1 border border-neutral-800">
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                activeTab === "orders"
+                  ? "bg-[#FF5500] text-white"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5" /> ORDERS ({orders.length})
+            </button>
 
             <button
-              onClick={handleLogout}
-              className="p-3 border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white transition"
-              title="Logout"
+              onClick={() => setActiveTab("products")}
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                activeTab === "products"
+                  ? "bg-[#FF5500] text-white"
+                  : "text-neutral-400 hover:text-white"
+              }`}
             >
-              <LogOut className="w-4 h-4" />
+              <Package className="w-3.5 h-3.5" /> PRODUCTS ({products.length})
             </button>
           </div>
         </div>
 
-        {/* PRODUCTS TAB */}
-        {activeAdminTab === "PRODUCTS" && (
+        {/* ================= ORDERS TAB ================= */}
+        {activeTab === "orders" && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold uppercase tracking-wider text-neutral-300">
-                Live Store Catalog ({products.length} Items)
-              </h2>
-              <button
-                onClick={openCreateModal}
-                className="bg-[#FF5500] text-white text-xs uppercase tracking-widest px-6 py-3 font-black hover:bg-[#e04b00] transition flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" /> Add New Product
-              </button>
+            {/* Metrics Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                  TOTAL ORDERS RECEIVED
+                </span>
+                <p className="text-3xl font-black text-white">{orders.length}</p>
+              </div>
+              <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                  ESTIMATED REVENUE
+                </span>
+                <p className="text-3xl font-black text-[#FF5500]">₹{totalRevenue}</p>
+              </div>
+              <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                  FULFILLMENT STATUS
+                </span>
+                <p className="text-3xl font-black text-emerald-500">100% ACTIVE</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="border border-neutral-800 bg-neutral-900/60 p-4 space-y-4 hover:border-neutral-700 transition"
-                >
-                  <div className="aspect-[4/3] bg-neutral-950 overflow-hidden relative border border-neutral-800">
-                    <img
-                      src={product.images && product.images.length > 0 ? product.images[0] : product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-neutral-800">
-                      {product.images?.length || 1} Photo(s)
-                    </span>
-                  </div>
+            {/* Orders Table/List */}
+            {orders.length === 0 ? (
+              <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  No customer orders received yet.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((ord, idx) => (
+                  <div
+                    key={ord.id || idx}
+                    className="border border-neutral-800 bg-neutral-950 p-6 space-y-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-900 gap-2">
+                      <div>
+                        <span className="text-xs font-black text-[#FF5500] uppercase tracking-widest">
+                          {ord.id || `ORD-${1000 + idx}`}
+                        </span>
+                        <h3 className="text-base font-bold text-white mt-0.5">{ord.customer}</h3>
+                        <p className="text-xs text-neutral-400">{ord.phone} • {ord.address}</p>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <span className="text-lg font-black text-white">₹{ord.total}</span>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                          {ord.status || "PROCESSING (COD)"}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-sm text-white truncate">{product.name}</h3>
-                    <div className="flex items-center gap-3 pt-2">
-                      <span className="font-black text-white">₹{product.price}</span>
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                        ITEMS ORDERED:
+                      </span>
+                      <div className="flex flex-wrap gap-3">
+                        {ord.items &&
+                          ord.items.map((item: any, itemIdx: number) => (
+                            <div
+                              key={itemIdx}
+                              className="bg-neutral-900 border border-neutral-800 px-3 py-2 text-xs font-bold text-neutral-300"
+                            >
+                              {item.name} ({item.size || "M"}) × {item.quantity || 1} — ₹{item.price}
+                            </div>
+                          ))}
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex gap-2 pt-2 border-t border-neutral-800">
-                    <button
-                      onClick={() => openEditModal(product)}
-                      className="flex-1 bg-neutral-800 text-white text-xs uppercase tracking-wider py-2 font-bold hover:bg-white hover:text-black transition flex items-center justify-center gap-1.5"
-                    >
-                      <Edit className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="bg-red-950/40 border border-red-900/50 text-red-400 hover:bg-red-600 hover:text-white text-xs uppercase tracking-wider px-3 py-2 font-bold transition flex items-center justify-center"
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* MODAL */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-neutral-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
+        {/* ================= PRODUCTS TAB ================= */}
+        {activeTab === "products" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            {/* Create Product Form */}
+            <div className="border border-neutral-800 bg-neutral-950 p-6 space-y-5">
+              <div className="border-b border-neutral-800 pb-3">
+                <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
+                  ADD NEW APPAREL
+                </span>
+                <h3 className="text-lg font-black uppercase tracking-tight text-white mt-0.5">
+                  CREATE PRODUCT DROP
+                </h3>
+              </div>
 
-              <h2 className="text-xl font-black uppercase tracking-tight">
-                {editingProduct ? "Edit Product" : "Add New Product"}
-              </h2>
-
-              <form onSubmit={handleSaveProduct} className="space-y-4">
+              <form onSubmit={handleAddProduct} className="space-y-4 text-xs font-bold uppercase tracking-widest">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Product Title
-                  </label>
+                  <label className="block text-neutral-400 mb-1">Product Title</label>
                   <input
                     type="text"
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    placeholder='e.g., "MADNESS" OVERSIZED TEE'
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                      Price (₹)
-                    </label>
+                    <label className="block text-neutral-400 mb-1">Price (₹)</label>
                     <input
                       type="number"
                       required
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                      placeholder="799"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                      Sizes
-                    </label>
+                    <label className="block text-neutral-400 mb-1">Original Price (₹)</label>
                     <input
-                      type="text"
-                      value={formData.sizes}
-                      onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                      className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                      type="number"
+                      placeholder="1299"
+                      value={originalPrice}
+                      onChange={(e) => setOriginalPrice(e.target.value)}
+                      className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Upload Photos From Gallery
-                  </label>
-                  
-                  <label className="w-full cursor-pointer bg-neutral-950 border border-dashed border-neutral-700 hover:border-[#FF5500] p-4 text-center transition flex flex-col items-center justify-center gap-1 mb-3">
-                    <Upload className="w-5 h-5 text-[#FF5500]" />
-                    <span className="text-xs font-bold text-neutral-300">Click to Select Photos</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleMultipleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-
-                  {formData.images.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2 pt-2">
-                      {formData.images.map((img, idx) => (
-                        <div key={idx} className="relative aspect-square border border-neutral-800 bg-neutral-950 group">
-                          <img src={img} alt={`Upload ${idx}`} className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removeImageAt(idx)}
-                            className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full text-xs opacity-90 hover:opacity-100"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <label className="block text-neutral-400 mb-1">Category</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
+                  >
+                    <option value="TEES">TEES</option>
+                    <option value="SHIRTS">SHIRTS</option>
+                    <option value="JEANS">JEANS</option>
+                    <option value="HOODIES">HOODIES</option>
+                    <option value="OUTERWEAR">OUTERWEAR</option>
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Description
-                  </label>
+                  <label className="block text-neutral-400 mb-1">Image URLs (Comma-separated)</label>
                   <textarea
-                    rows={4}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    rows={2}
+                    placeholder="https://image1.jpg, https://image2.jpg"
+                    value={images}
+                    onChange={(e) => setImages(e.target.value)}
+                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-neutral-400 mb-1">Description</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Heavyweight combed cotton street silhouette..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#FF5500] text-white text-xs uppercase tracking-widest py-4 font-black hover:bg-[#e04b00] transition"
+                  className="w-full bg-[#FF5500] text-white py-4 font-black hover:bg-[#e04b00] transition flex items-center justify-center gap-2"
                 >
-                  {editingProduct ? "Save Changes" : "Publish Product"}
+                  <Plus className="w-4 h-4" /> PUBLISH TO STOREFRONT
                 </button>
               </form>
             </div>
+
+            {/* Existing Products List */}
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-2">
+                ACTIVE STORE PRODUCTS ({products.length})
+              </h3>
+
+              {products.length === 0 ? (
+                <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
+                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                    No products added yet. Use the form on the left.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {products.map((p) => {
+                    const img =
+                      p.images && p.images.length > 0
+                        ? p.images[0]
+                        : p.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60";
+
+                    return (
+                      <div
+                        key={p.id}
+                        className="border border-neutral-800 bg-neutral-950 p-4 flex gap-4 items-center justify-between"
+                      >
+                        <div className="flex gap-3 items-center">
+                          <img
+                            src={img}
+                            alt={p.name}
+                            className="w-16 h-20 object-cover bg-neutral-900 border border-neutral-800"
+                          />
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-black uppercase text-[#FF5500]">
+                              {p.category || "STREETWEAR"}
+                            </span>
+                            <h4 className="font-bold text-xs text-white line-clamp-1">{p.name}</h4>
+                            <p className="text-xs font-black text-white">₹{p.price}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleDeleteProduct(p.id)}
+                          className="text-neutral-500 hover:text-red-500 transition p-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
+
       </div>
     </div>
   );
