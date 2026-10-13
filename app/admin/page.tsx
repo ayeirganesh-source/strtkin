@@ -16,49 +16,6 @@ import {
   X,
 } from "lucide-react";
 
-const DEFAULT_PRODUCTS = [
-  {
-    id: "1",
-    name: "Oversized Heavyweight Black Tee",
-    category: "t-shirts",
-    price: 799,
-    originalPrice: 1299,
-    description: "Premium 240 GSM 100% combed cotton oversized t-shirt.",
-    sizes: ["S", "M", "L", "XL"],
-    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
-  },
-  {
-    id: "2",
-    name: "Classic Oxford White Button-Down",
-    category: "shirts",
-    price: 1499,
-    originalPrice: 2499,
-    description: "Tailored Oxford woven cotton shirt.",
-    sizes: ["S", "M", "L", "XL"],
-    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=60",
-  },
-  {
-    id: "3",
-    name: "Slim Fit Raw Indigo Denim Jeans",
-    category: "jeans",
-    price: 1999,
-    originalPrice: 3499,
-    description: "Heavy-duty 14oz raw stretch denim.",
-    sizes: ["30", "32", "34", "36"],
-    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&auto=format&fit=crop&q=60",
-  },
-  {
-    id: "4",
-    name: "Minimalist Black Hoodie",
-    category: "hoodies",
-    price: 2199,
-    originalPrice: 3799,
-    description: "Ultra-soft fleece-lined hoodie.",
-    sizes: ["S", "M", "L", "XL"],
-    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=60",
-  },
-];
-
 export default function AdminDashboardPage() {
   const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("ORDERS");
 
@@ -66,7 +23,7 @@ export default function AdminDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
 
-  // Products State
+  // Products State (Starts empty, no hardcoded defaults)
   const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
@@ -93,18 +50,17 @@ export default function AdminDashboardPage() {
       }
     }
 
-    // Products (Safely falls back to DEFAULT_PRODUCTS if empty)
+    // Products
     const savedProducts = localStorage.getItem("strtkin_products");
     if (savedProducts) {
       try {
-        const parsed = JSON.parse(savedProducts);
-        setProducts(parsed.length > 0 ? parsed : DEFAULT_PRODUCTS);
+        setProducts(JSON.parse(savedProducts));
       } catch (e) {
-        setProducts(DEFAULT_PRODUCTS);
+        setProducts([]);
       }
     } else {
-      setProducts(DEFAULT_PRODUCTS);
-      localStorage.setItem("strtkin_products", JSON.stringify(DEFAULT_PRODUCTS));
+      setProducts([]);
+      localStorage.setItem("strtkin_products", JSON.stringify([]));
     }
   }, []);
 
@@ -394,52 +350,61 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="border border-neutral-800 bg-neutral-900/60 p-4 space-y-4 hover:border-neutral-700 transition"
-                >
-                  <div className="aspect-[4/3] bg-neutral-950 overflow-hidden relative border border-neutral-800">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-neutral-800">
-                      {product.category}
-                    </span>
-                  </div>
+            {products.length === 0 ? (
+              <div className="border border-neutral-800 bg-neutral-900/40 p-16 text-center space-y-3">
+                <Package className="w-10 h-10 text-neutral-600 mx-auto" />
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                  No products in catalog yet. Click "Add New Product" to publish items.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <div
+                    key={product.id}
+                    className="border border-neutral-800 bg-neutral-900/60 p-4 space-y-4 hover:border-neutral-700 transition"
+                  >
+                    <div className="aspect-[4/3] bg-neutral-950 overflow-hidden relative border border-neutral-800">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-neutral-800">
+                        {product.category}
+                      </span>
+                    </div>
 
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-sm text-white truncate">{product.name}</h3>
-                    <p className="text-xs text-neutral-400 line-clamp-2">{product.description}</p>
-                    <div className="flex items-center gap-3 pt-2">
-                      <span className="font-black text-white">₹{product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-xs text-neutral-500 line-through">₹{product.originalPrice}</span>
-                      )}
+                    <div className="space-y-1">
+                      <h3 className="font-bold text-sm text-white truncate">{product.name}</h3>
+                      <p className="text-xs text-neutral-400 line-clamp-2">{product.description}</p>
+                      <div className="flex items-center gap-3 pt-2">
+                        <span className="font-black text-white">₹{product.price}</span>
+                        {product.originalPrice && (
+                          <span className="text-xs text-neutral-500 line-through">₹{product.originalPrice}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t border-neutral-800">
+                      <button
+                        onClick={() => openEditModal(product)}
+                        className="flex-1 bg-neutral-800 text-white text-xs uppercase tracking-wider py-2 font-bold hover:bg-white hover:text-black transition flex items-center justify-center gap-1.5"
+                      >
+                        <Edit className="w-3.5 h-3.5" /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="p-2 border border-neutral-800 text-neutral-400 hover:text-red-500 hover:border-red-500 transition"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex gap-2 pt-2 border-t border-neutral-800">
-                    <button
-                      onClick={() => openEditModal(product)}
-                      className="flex-1 bg-neutral-800 text-white text-xs uppercase tracking-wider py-2 font-bold hover:bg-white hover:text-black transition flex items-center justify-center gap-1.5"
-                    >
-                      <Edit className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="p-2 border border-neutral-800 text-neutral-400 hover:text-red-500 hover:border-red-500 transition"
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
