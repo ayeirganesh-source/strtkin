@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ShoppingBag, ShieldCheck, Truck, Check } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
@@ -49,8 +49,9 @@ const DEFAULT_PRODUCTS = [
   },
 ];
 
-export default function ProductDetailPage() {
+function ProductDetailContent() {
   const params = useParams();
+  const router = useRouter();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState<any>(null);
@@ -230,5 +231,13 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center text-xs font-black uppercase tracking-widest">LOADING PRODUCT...</div>}>
+      <ProductDetailContent />
+    </Suspense>
   );
 }
