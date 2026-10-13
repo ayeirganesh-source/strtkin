@@ -1,23 +1,24 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, ShoppingBag, Check, ShieldCheck, Truck, RotateCcw } from "lucide-react";
 import { getStoredProducts } from "@/app/lib/products";
 
-function ProductDetailContent({ productId }: { productId: string }) {
+function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: string }> }) {
+  const resolvedParams = use(paramsPromise);
+  const productId = resolvedParams?.id;
+
   const [product, setProduct] = useState<any | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("M");
   const [isAdded, setIsAdded] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!productId) return;
-
     const products = getStoredProducts();
     let found = products.find((p: any) => String(p.id) === String(productId));
 
-    // Fallback: Default to first product if requested ID is not matched
+    // Fallback if navigating to /shop/1 or an old missing ID
     if (!found && products.length > 0) {
       found = products[0];
     }
@@ -127,7 +128,7 @@ function ProductDetailContent({ productId }: { productId: string }) {
             )}
           </div>
 
-          {/* Right: Product Details and Actions */}
+          {/* Right: Details & Add to Bag */}
           <div className="space-y-6 flex flex-col justify-between">
             <div className="space-y-5">
               <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-3 py-1 inline-block">
@@ -157,7 +158,7 @@ function ProductDetailContent({ productId }: { productId: string }) {
                 </p>
               </div>
 
-              {/* Size Options */}
+              {/* Sizes Selection */}
               {product.sizes && product.sizes.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <label className="block text-xs font-black uppercase tracking-widest text-neutral-300">
@@ -181,7 +182,7 @@ function ProductDetailContent({ productId }: { productId: string }) {
                 </div>
               )}
 
-              {/* Add to Bag Button */}
+              {/* Add to Bag Action */}
               <div className="pt-4">
                 <button
                   onClick={handleAddToCart}
@@ -221,7 +222,7 @@ function ProductDetailContent({ productId }: { productId: string }) {
   );
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense
       fallback={
@@ -232,7 +233,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
         </div>
       }
     >
-      <ProductDetailContent productId={params?.id} />
+      <ProductDetailContent paramsPromise={params} />
     </Suspense>
   );
 }
