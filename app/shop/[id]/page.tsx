@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, ShoppingBag, Check, ShieldCheck, Truck, RotateCcw } from "lucide-react";
 import { getStoredProducts } from "@/app/lib/products";
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const productId = params?.id as string;
-
+function ProductDetailContent({ productId }: { productId: string }) {
   const [product, setProduct] = useState<any | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("M");
@@ -21,7 +17,7 @@ export default function ProductDetailPage() {
     const products = getStoredProducts();
     let found = products.find((p: any) => String(p.id) === String(productId));
 
-    // Fallback: Default to first product if requested ID is 1
+    // Fallback: Default to first product if requested ID is not matched
     if (!found && products.length > 0) {
       found = products[0];
     }
@@ -99,7 +95,7 @@ export default function ProductDetailPage() {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Left: Images */}
+          {/* Left: Product Images */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-neutral-950 border border-neutral-800 overflow-hidden relative">
               <img
@@ -131,7 +127,7 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Right: Buy Controls */}
+          {/* Right: Product Details and Actions */}
           <div className="space-y-6 flex flex-col justify-between">
             <div className="space-y-5">
               <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-3 py-1 inline-block">
@@ -161,7 +157,7 @@ export default function ProductDetailPage() {
                 </p>
               </div>
 
-              {/* Sizes Selection */}
+              {/* Size Options */}
               {product.sizes && product.sizes.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <label className="block text-xs font-black uppercase tracking-widest text-neutral-300">
@@ -185,7 +181,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Add to Bag Action */}
+              {/* Add to Bag Button */}
               <div className="pt-4">
                 <button
                   onClick={handleAddToCart}
@@ -222,5 +218,21 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <p className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
+            LOADING PRODUCT...
+          </p>
+        </div>
+      }
+    >
+      <ProductDetailContent productId={params?.id} />
+    </Suspense>
   );
 }
