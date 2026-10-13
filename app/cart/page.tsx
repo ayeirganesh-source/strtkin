@@ -5,18 +5,16 @@ import Link from "next/link";
 import { Trash2, ArrowRight, ShoppingBag } from "lucide-react";
 
 export default function CartPage() {
-  // Sample cart item for STRTKIN.in
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Oversized Heavyweight Black Tee",
-      size: "L",
-      color: "Black",
-      price: 799,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
-    },
-  ]);
+  // Initialize with an empty array so the cart starts empty
+  const [cartItems, setCartItems] = useState<{
+    id: number;
+    name: string;
+    size: string;
+    color: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }[]>([]);
 
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
