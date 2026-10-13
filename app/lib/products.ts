@@ -22,7 +22,7 @@ export function getStoredProducts() {
   }
   try {
     const parsed = JSON.parse(saved);
-    return parsed.length > 0 ? parsed : DEFAULT_PRODUCTS;
+    return parsed;
   } catch (e) {
     return DEFAULT_PRODUCTS;
   }
@@ -31,6 +31,6 @@ export function getStoredProducts() {
 export function saveStoredProducts(products: any[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem("strtkin_products", JSON.stringify(products));
-  // Dispatch a custom event so the home page and shop page update instantly across tabs
+  // Notify other components/tabs immediately
   window.dispatchEvent(new Event("strtkin_products_updated"));
 }

@@ -14,21 +14,7 @@ import {
   Lock,
   LogOut,
 } from "lucide-react";
-
-const DEFAULT_PRODUCTS = [
-  {
-    id: "1",
-    name: 'Urban Royal "Enjoy The Madness" Oversized Tee',
-    category: "t-shirts",
-    price: 799,
-    originalPrice: 1299,
-    description: "Premium cotton blend oversized drop-shoulder t-shirt in beige with a bold back graphic print.",
-    sizes: ["M", "L", "XL"],
-    images: [
-      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"
-    ],
-  },
-];
+import { getStoredProducts, saveStoredProducts } from "../lib/products";
 
 export default function AdminDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -69,23 +55,7 @@ export default function AdminDashboardPage() {
       }
     }
 
-    const savedProducts = localStorage.getItem("strtkin_products");
-    if (savedProducts) {
-      try {
-        const parsed = JSON.parse(savedProducts);
-        const normalized = parsed.map((p: any) => ({
-          ...p,
-          images: p.images && p.images.length > 0 ? p.images : [p.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"]
-        }));
-        setProducts(normalized);
-      } catch (e) {
-        console.error("Failed to parse products", e);
-        setProducts(DEFAULT_PRODUCTS);
-      }
-    } else {
-      setProducts(DEFAULT_PRODUCTS);
-      localStorage.setItem("strtkin_products", JSON.stringify(DEFAULT_PRODUCTS));
-    }
+    setProducts(getStoredProducts());
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -136,7 +106,7 @@ export default function AdminDashboardPage() {
     if (confirm("Are you sure you want to delete this product from your storefront?")) {
       const updated = products.filter((p) => p.id !== id);
       setProducts(updated);
-      localStorage.setItem("strtkin_products", JSON.stringify(updated));
+      saveStoredProducts(updated);
     }
   };
 
@@ -190,7 +160,7 @@ export default function AdminDashboardPage() {
     }
 
     setProducts(updatedProducts);
-    localStorage.setItem("strtkin_products", JSON.stringify(updatedProducts));
+    saveStoredProducts(updatedProducts);
     setIsModalOpen(false);
   };
 

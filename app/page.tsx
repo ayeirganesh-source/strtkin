@@ -3,38 +3,26 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingBag, ArrowRight, ShieldCheck, Truck, RotateCcw } from "lucide-react";
-
-const DEFAULT_PRODUCTS = [
-  {
-    id: "1",
-    name: "Urban Royal \"Enjoy The Madness\" Oversized Tee",
-    category: "t-shirts",
-    price: 799,
-    originalPrice: 1299,
-    description: "Premium cotton blend oversized drop-shoulder t-shirt in beige with a bold back graphic print.",
-    sizes: ["M", "L", "XL"],
-    images: [
-      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"
-    ],
-  },
-];
+import { getStoredProducts } from "./lib/products";
 
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
 
+  const loadProducts = () => {
+    setProducts(getStoredProducts());
+  };
+
   useEffect(() => {
-    const saved = localStorage.getItem("strtkin_products");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setProducts(parsed);
-      } catch (e) {
-        console.error("Failed to parse products", e);
-        setProducts(DEFAULT_PRODUCTS);
-      }
-    } else {
-      setProducts(DEFAULT_PRODUCTS);
-    }
+    loadProducts();
+
+    // Listen for custom update event and localStorage storage events
+    window.addEventListener("strtkin_products_updated", loadProducts);
+    window.addEventListener("storage", loadProducts);
+
+    return () => {
+      window.removeEventListener("strtkin_products_updated", loadProducts);
+      window.removeEventListener("storage", loadProducts);
+    };
   }, []);
 
   return (
