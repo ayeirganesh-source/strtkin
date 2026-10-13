@@ -93,13 +93,13 @@ export default function AdminDashboardPage() {
       }
     }
 
-    // Products
+    // Products (Safely falls back to DEFAULT_PRODUCTS if empty)
     const savedProducts = localStorage.getItem("strtkin_products");
     if (savedProducts) {
       try {
-        setProducts(JSON.parse(savedProducts));
+        const parsed = JSON.parse(savedProducts);
+        setProducts(parsed.length > 0 ? parsed : DEFAULT_PRODUCTS);
       } catch (e) {
-        console.error("Failed to parse products", e);
         setProducts(DEFAULT_PRODUCTS);
       }
     } else {
