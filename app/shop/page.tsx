@@ -3,8 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
-import { ShoppingBag } from "lucide-react";
+import { useCart } from "../context/CartContext";import { ShoppingBag } from "lucide-react";
 
 const ALL_PRODUCTS = [
   {

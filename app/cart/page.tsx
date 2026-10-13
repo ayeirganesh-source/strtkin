@@ -3,38 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Trash2, ArrowRight, ShoppingBag } from "lucide-react";
+import { useCart } from "../context/CartContext";
 
 export default function CartPage() {
-  // Initialize with an empty array so the cart starts empty
-  const [cartItems, setCartItems] = useState<{
-    id: number;
-    name: string;
-    size: string;
-    color: string;
-    price: number;
-    quantity: number;
-    image: string;
-  }[]>([]);
-
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
   const [couponError, setCouponError] = useState("");
-
-  const handleQuantityChange = (id: number, delta: number) => {
-    setCartItems(
-      cartItems.map((item) => {
-        if (item.id === id) {
-          const newQty = item.quantity + delta;
-          return newQty > 0 ? { ...item, quantity: newQty } : item;
-        }
-        return item;
-      })
-    );
-  };
-
-  const handleRemoveItem = (id: number) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
 
   const applyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +52,7 @@ export default function CartPage() {
         {/* Cart Items List */}
         <div className="lg:col-span-8 space-y-6">
           {cartItems.map((item) => (
-            <div key={item.id} className="flex gap-4 sm:gap-6 pb-6 border-b border-neutral-200 items-center">
+            <div key={`${item.id}-${item.size}`} className="flex gap-4 sm:gap-6 pb-6 border-b border-neutral-200 items-center">
               <div className="w-20 sm:w-24 aspect-[4/5] bg-neutral-100 relative flex-shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
               </div>
@@ -90,14 +65,14 @@ export default function CartPage() {
               {/* Quantity Controls */}
               <div className="flex items-center border border-neutral-300">
                 <button
-                  onClick={() => handleQuantityChange(item.id, -1)}
+                  onClick={() => updateQuantity(item.id, -1)}
                   className="px-3 py-1 text-sm font-bold hover:bg-neutral-100 transition"
                 >
                   -
                 </button>
                 <span className="px-3 py-1 text-sm font-semibold">{item.quantity}</span>
                 <button
-                  onClick={() => handleQuantityChange(item.id, 1)}
+                  onClick={() => updateQuantity(item.id, 1)}
                   className="px-3 py-1 text-sm font-bold hover:bg-neutral-100 transition"
                 >
                   +
@@ -105,7 +80,7 @@ export default function CartPage() {
               </div>
 
               <button
-                onClick={() => handleRemoveItem(item.id)}
+                onClick={() => removeFromCart(item.id)}
                 className="p-2 text-neutral-400 hover:text-black transition"
                 title="Remove item"
               >
