@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-const INITIAL_PRODUCTS = [
+const DEFAULT_PRODUCTS = [
   {
     id: "1",
     name: "Oversized Heavyweight Black Tee",
@@ -51,10 +51,10 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const urlCategory = searchParams.get("category");
 
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState(DEFAULT_PRODUCTS);
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  // Sync state with URL category parameter
+  // Sync with URL category parameter
   useEffect(() => {
     if (urlCategory) {
       setSelectedCategory(urlCategory.toLowerCase());
@@ -63,7 +63,7 @@ function ShopContent() {
     }
   }, [urlCategory]);
 
-  // Load from localStorage
+  // Load live updated products from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("strtkin_products");
     if (saved) {
@@ -76,12 +76,12 @@ function ShopContent() {
         }));
         setProducts(normalized);
       } catch (e) {
-        console.error("Failed to parse products", e);
+        console.error("Failed to parse products from localStorage", e);
       }
     }
   }, []);
 
-  // Strict filtering by category
+  // Strict category filtering
   const filteredProducts = selectedCategory === "all"
     ? products
     : products.filter((p) => {
@@ -93,78 +93,89 @@ function ShopContent() {
       });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Catalog Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 pb-6 border-b border-neutral-200">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">STRTKIN.in Storefront</span>
-          <h1 className="text-3xl font-black uppercase tracking-tight mt-1">
-            {selectedCategory === "all" ? "Complete Apparel Collection" : `${selectedCategory} Collection`}
-          </h1>
+    <div className="min-h-screen bg-black text-white selection:bg-[#FF5500] selection:text-white pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+        {/* Catalog Header Frame */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 pb-6 border-b border-neutral-800">
+          <div>
+            <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] block mb-2">
+              STRTKIN.IN STOREFRONT
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tighter text-white">
+              {selectedCategory === "all" ? "COMPLETE APPAREL COLLECTION" : `${selectedCategory} COLLECTION`}
+            </h1>
+          </div>
+
+          {/* Category Filter Buttons */}
+          <div className="flex flex-wrap gap-2 mt-6 md:mt-0">
+            {[
+              { label: "ALL", value: "all" },
+              { label: "T-SHIRTS", value: "t-shirts" },
+              { label: "SHIRTS", value: "shirts" },
+              { label: "JEANS", value: "jeans" },
+              { label: "HOODIES", value: "hoodies" },
+            ].map((cat) => (
+              <Link
+                key={cat.value}
+                href={cat.value === "all" ? "/shop" : `/shop?category=${cat.value}`}
+                className={`px-5 py-2.5 text-xs font-extrabold uppercase tracking-widest transition border ${
+                  selectedCategory === cat.value
+                    ? "bg-[#FF5500] text-white border-[#FF5500] shadow-lg shadow-[#FF5500]/20"
+                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600 hover:text-white"
+                }`}
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-          {[
-            { label: "All", value: "all" },
-            { label: "T-Shirts", value: "t-shirts" },
-            { label: "Shirts", value: "shirts" },
-            { label: "Jeans", value: "jeans" },
-            { label: "Hoodies", value: "hoodies" },
-          ].map((cat) => (
-            <Link
-              key={cat.value}
-              href={cat.value === "all" ? "/shop" : `/shop?category=${cat.value}`}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
-                selectedCategory === cat.value
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-neutral-600 border-neutral-300 hover:border-black"
-              }`}
-            >
-              {cat.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Product Grid */}
-      {filteredProducts.length === 0 ? (
-        <div className="text-center py-20 text-neutral-500 uppercase tracking-widest text-sm">
-          No products found in the "{selectedCategory}" category.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
-            <Link key={product.id} href={`/shop/${product.id}`} className="group block">
-              <div className="aspect-[4/5] bg-neutral-100 overflow-hidden relative mb-4 border border-neutral-200">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                />
-                <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1">
-                  Save 40%
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400">{product.category}</span>
-                <h3 className="font-bold text-sm text-neutral-900 group-hover:underline truncate">{product.name}</h3>
-                <div className="flex items-center gap-3 pt-1">
-                  <span className="font-bold text-sm">₹{product.price}</span>
-                  <span className="text-xs text-neutral-400 line-through">₹{product.originalPrice}</span>
+        {/* Product Grid */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-28 border border-neutral-800 bg-neutral-950/50">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+              NO PRODUCTS FOUND IN THE "{selectedCategory}" CATEGORY.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {filteredProducts.map((product) => (
+              <Link key={product.id} href={`/shop/${product.id}`} className="group block space-y-3">
+                <div className="aspect-[4/5] bg-neutral-950 overflow-hidden relative border border-neutral-800/80 group-hover:border-[#FF5500]/60 transition duration-300">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100"
+                  />
+                  <span className="absolute top-3 left-3 bg-[#FF5500] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1">
+                    SAVE 40%
+                  </span>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+                
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-black tracking-widest text-[#FF5500] block">
+                    {product.category}
+                  </span>
+                  <h3 className="font-extrabold text-sm text-neutral-100 group-hover:text-[#FF5500] transition truncate uppercase tracking-tight">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="font-black text-sm text-white">₹{product.price}</span>
+                    <span className="text-xs text-neutral-500 line-through font-medium">₹{product.originalPrice}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={<div className="py-20 text-center text-sm uppercase tracking-widest">Loading Catalog...</div>}>
+    <Suspense fallback={<div className="py-24 text-center text-xs uppercase font-extrabold tracking-widest bg-black text-neutral-500">LOADING CATALOG...</div>}>
       <ShopContent />
     </Suspense>
   );
