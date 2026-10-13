@@ -19,8 +19,8 @@ export default function Header() {
       <header className="bg-black text-white border-b border-neutral-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
-          {/* Logo */}
-          <Link href="/shop" className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
+          {/* Logo - Navigates to Home Page */}
+          <Link href="/" className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
             STRTKIN<span className="text-[#FF5500]">.IN</span>
           </Link>
 
