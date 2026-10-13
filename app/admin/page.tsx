@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("ORDERS");
+  const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("PRODUCTS");
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,8 +148,8 @@ export default function AdminDashboardPage() {
       originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.5,
       description: formData.description,
       sizes: formData.sizes.split(",").map((s) => s.trim()),
-      images: formData.images.length > 0 ? formData.images : ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"],
-      image: formData.images[0] || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
+      images: formData.images,
+      image: formData.images[0] || "",
     };
 
     let updatedProducts;

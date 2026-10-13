@@ -8,20 +8,19 @@ import { getStoredProducts } from "./lib/products";
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
 
-  const loadProducts = () => {
+  const refreshProducts = () => {
     setProducts(getStoredProducts());
   };
 
   useEffect(() => {
-    loadProducts();
+    refreshProducts();
 
-    // Listen for custom update event and localStorage storage events
-    window.addEventListener("strtkin_products_updated", loadProducts);
-    window.addEventListener("storage", loadProducts);
+    window.addEventListener("strtkin_products_updated", refreshProducts);
+    window.addEventListener("storage", refreshProducts);
 
     return () => {
-      window.removeEventListener("strtkin_products_updated", loadProducts);
-      window.removeEventListener("storage", loadProducts);
+      window.removeEventListener("strtkin_products_updated", refreshProducts);
+      window.removeEventListener("storage", refreshProducts);
     };
   }, []);
 

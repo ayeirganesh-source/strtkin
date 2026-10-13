@@ -2,26 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag, Filter } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { getStoredProducts } from "../lib/products";
 
 export default function ShopPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
-  const loadProducts = () => {
+  const refreshProducts = () => {
     setProducts(getStoredProducts());
   };
 
   useEffect(() => {
-    loadProducts();
+    refreshProducts();
 
-    window.addEventListener("strtkin_products_updated", loadProducts);
-    window.addEventListener("storage", loadProducts);
+    window.addEventListener("strtkin_products_updated", refreshProducts);
+    window.addEventListener("storage", refreshProducts);
 
     return () => {
-      window.removeEventListener("strtkin_products_updated", loadProducts);
-      window.removeEventListener("storage", loadProducts);
+      window.removeEventListener("strtkin_products_updated", refreshProducts);
+      window.removeEventListener("storage", refreshProducts);
     };
   }, []);
 
@@ -35,7 +35,6 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 pb-6 border-b border-neutral-800 gap-4">
           <div>
             <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
@@ -46,7 +45,6 @@ export default function ShopPage() {
             </h1>
           </div>
 
-          {/* Category Filter Tabs */}
           <div className="flex flex-wrap gap-2">
             {["ALL", "T-SHIRTS", "SHIRTS", "JEANS", "HOODIES"].map((cat) => (
               <button
@@ -64,11 +62,10 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* Product Grid */}
         {filteredProducts.length === 0 ? (
           <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
             <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
-              No products found in this category.
+              No products available in this category.
             </p>
           </div>
         ) : (
@@ -91,11 +88,6 @@ export default function ShopPage() {
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
-                    {product.originalPrice && (
-                      <span className="absolute top-3 left-3 bg-[#FF5500] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1">
-                        SAVE {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-                      </span>
-                    )}
                   </div>
 
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
@@ -114,6 +106,9 @@ export default function ShopPage() {
                           </span>
                         )}
                       </div>
+                      <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] flex items-center gap-1">
+                        <ShoppingBag className="w-3.5 h-3.5" /> VIEW
+                      </span>
                     </div>
                   </div>
                 </Link>

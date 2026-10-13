@@ -1,7 +1,7 @@
-export const DEFAULT_PRODUCTS = [
+export const INITIAL_PRODUCTS = [
   {
     id: "1",
-    name: 'Urban Royal "Enjoy The Madness" Oversized Tee',
+    name: 'Urban Royal "Enjoy The Madness" Oversized Graphic Tee',
     category: "t-shirts",
     price: 799,
     originalPrice: 1299,
@@ -14,25 +14,24 @@ export const DEFAULT_PRODUCTS = [
 ];
 
 export function getStoredProducts() {
-  if (typeof window === "undefined") return DEFAULT_PRODUCTS;
+  if (typeof window === "undefined") return INITIAL_PRODUCTS;
   
-  const saved = localStorage.getItem("strtkin_products");
+  const saved = localStorage.getItem("strtkin_products_v2");
   if (!saved) {
-    localStorage.setItem("strtkin_products", JSON.stringify(DEFAULT_PRODUCTS));
-    return DEFAULT_PRODUCTS;
+    localStorage.setItem("strtkin_products_v2", JSON.stringify(INITIAL_PRODUCTS));
+    return INITIAL_PRODUCTS;
   }
   
   try {
     const parsed = JSON.parse(saved);
-    // Return saved products even if empty array so it doesn't revert to default
     return parsed;
   } catch (e) {
-    return DEFAULT_PRODUCTS;
+    return INITIAL_PRODUCTS;
   }
 }
 
 export function saveStoredProducts(products: any[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem("strtkin_products", JSON.stringify(products));
+  localStorage.setItem("strtkin_products_v2", JSON.stringify(products));
   window.dispatchEvent(new Event("strtkin_products_updated"));
 }
