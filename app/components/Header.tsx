@@ -39,9 +39,15 @@ export default function Header() {
   return (
     <header className="bg-black border-b border-neutral-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-black uppercase tracking-tighter text-white flex items-center">
-          STRTKIN<span className="text-[#FF5500]">.IN</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="text-2xl font-black uppercase tracking-tighter text-white flex items-center">
+            STRTKIN<span className="text-[#FF5500]">.IN</span>
+          </Link>
+          {/* Admin shortcut link */}
+          <Link href="/admin" className="text-[10px] font-bold text-neutral-500 hover:text-[#FF5500] uppercase tracking-widest transition">
+            [ADMIN]
+          </Link>
+        </div>
 
         <nav className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-neutral-300">
           <Link href="/shop" className="hover:text-[#FF5500] transition">

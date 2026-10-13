@@ -1,174 +1,225 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
-import { ArrowRight, ShoppingBag, ShieldCheck, Truck, RotateCcw } from "lucide-react";
-import { getStoredProducts } from "../lib/products";
+import { useRouter } from "next/navigation"; // 1. Import useRouter
+import { ArrowLeft, ShoppingBag, Check, ShieldCheck, Truck, RotateCcw } from "lucide-react";
+import { getStoredProducts } from "@/app/lib/products";
 
-export default function HomePage() {
-  const [products, setProducts] = useState<any[]>([]);
+function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: string }> }) {
+  const router = useRouter(); // 2. Initialize router
+  const resolvedParams = use(paramsPromise);
+  const productId = resolvedParams?.id;
 
-  const refreshProducts = () => {
-    setProducts(getStoredProducts());
-  };
+  const [product, setProduct] = useState<any | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [selectedSize, setSelectedSize] = useState<string>("M");
+  const [isAdded, setIsAdded] = useState<boolean>(false);
 
   useEffect(() => {
-    refreshProducts();
+    const products = getStoredProducts();
+    let found = products.find((p: any) => String(p.id) === String(productId));
 
-    window.addEventListener("strtkin_products_updated", refreshProducts);
-    window.addEventListener("storage", refreshProducts);
+    if (!found && products.length > 0) {
+      found = products[0];
+    }
 
-    return () => {
-      window.removeEventListener("strtkin_products_updated", refreshProducts);
-      window.removeEventListener("storage", refreshProducts);
+    if (found) {
+      setProduct(found);
+      const imagesList =
+        found.images && found.images.length > 0
+          ? found.images
+          : [found.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"];
+      setSelectedImage(imagesList[0]);
+      if (found.sizes && found.sizes.length > 0) {
+        setSelectedSize(found.sizes[0]);
+      }
+    }
+  }, [productId]);
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center space-y-4 p-4">
+        <p className="text-xs font-black uppercase tracking-widest text-neutral-500">
+          PRODUCT NOT FOUND
+        </p>
+        <Link
+          href="/shop"
+          className="bg-[#FF5500] text-white text-xs font-black uppercase tracking-widest px-6 py-3 hover:bg-[#e04b00] transition"
+        >
+          BACK TO CATALOG
+        </Link>
+      </div>
+    );
+  }
+
+  const imagesList =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"];
+
+  const handleAddToCart = () => {
+    const existingCart = localStorage.getItem("strtkin_cart");
+    let cartItems = existingCart ? JSON.parse(existingCart) : [];
+
+    const newItem = {
+      id: `${product.id}-${selectedSize}`,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      size: selectedSize,
+      image: selectedImage,
+      quantity: 1,
     };
-  }, []);
+
+    const existingIndex = cartItems.findIndex((item: any) => item.id === newItem.id);
+    if (existingIndex > -1) {
+      cartItems[existingIndex].quantity += 1;
+    } else {
+      cartItems.push(newItem);
+    }
+
+    localStorage.setItem("strtkin_cart", JSON.stringify(cartItems));
+    window.dispatchEvent(new Event("strtkin_cart_updated"));
+
+    // 3. Immediately redirect to the cart page
+    router.push("/cart");
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white">
-      {/* Concrete Season Urban Hero */}
-      <section className="relative min-h-[85vh] flex items-end pb-16 pt-28 overflow-hidden bg-neutral-950 border-b border-neutral-800">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1600&auto=format&fit=crop&q=80"
-            alt="Born On The Street Hero"
-            className="w-full h-full object-cover object-center opacity-40"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-        </div>
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <Link
+          href="/shop"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-[#FF5500] transition mb-8"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Apparel Collection
+        </Link>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full space-y-6">
-          <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
-            DROP 04 — CONCRETE SEASON
-          </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <div className="space-y-4">
+            <div className="aspect-[4/5] bg-neutral-950 border border-neutral-800 overflow-hidden relative">
+              <img
+                src={selectedImage}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute top-4 left-4 bg-[#FF5500] text-white text-xs font-black uppercase tracking-widest px-3 py-1.5">
+                NEW DROP
+              </span>
+            </div>
 
-          <h1 className="text-6xl sm:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-none text-white max-w-4xl">
-            BORN ON <br />
-            THE STREET<span className="inline-block w-4 h-4 sm:w-6 sm:h-6 bg-[#FF5500] ml-2"></span>
-          </h1>
-
-          <p className="text-neutral-300 text-sm sm:text-base leading-relaxed max-w-xl font-medium">
-            Heavyweight essentials and statement outerwear, cut in India for the city-born. Built to be worn hard.
-          </p>
-
-          <div className="pt-4 flex flex-wrap gap-4">
-            <Link
-              href="/shop"
-              className="bg-[#FF5500] text-white text-xs font-black uppercase tracking-widest px-8 py-4 hover:bg-[#e04b00] transition flex items-center gap-2"
-            >
-              SHOP THE DROP <ArrowRight className="w-4 h-4" />
-            </Link>
+            {imagesList.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {imagesList.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(img)}
+                    className={`aspect-square bg-neutral-950 border transition overflow-hidden ${
+                      selectedImage === img
+                        ? "border-[#FF5500]"
+                        : "border-neutral-800 hover:border-neutral-600"
+                    }`}
+                  >
+                    <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
 
-      {/* Featured Drop Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="flex justify-between items-end mb-12 pb-4 border-b border-neutral-800">
-          <div>
-            <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
-              LIVE CATALOG
-            </span>
-            <h2 className="text-3xl font-black uppercase tracking-tight text-white mt-1">
-              CURRENT DROPS
-            </h2>
-          </div>
-          <Link
-            href="/shop"
-            className="text-xs font-black uppercase tracking-widest text-neutral-400 hover:text-white transition flex items-center gap-1"
-          >
-            VIEW ALL <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+          <div className="space-y-6 flex flex-col justify-between">
+            <div className="space-y-5">
+              <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-3 py-1 inline-block">
+                {product.category || "STREETWEAR"}
+              </span>
 
-        {products.length === 0 ? (
-          <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
-            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
-              No products uploaded yet.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((product) => {
-              const displayImage =
-                product.images && product.images.length > 0
-                  ? product.images[0]
-                  : product.image;
+              <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white leading-tight">
+                {product.name}
+              </h1>
 
-              return (
-                <Link
-                  key={product.id}
-                  href={`/shop/${product.id}`}
-                  className="group border border-neutral-800 bg-neutral-950 overflow-hidden hover:border-[#FF5500] transition flex flex-col"
+              <div className="flex items-center gap-4">
+                <span className="text-3xl font-black text-white">₹{product.price}</span>
+                {product.originalPrice && (
+                  <span className="text-sm font-bold text-neutral-500 line-through">
+                    ₹{product.originalPrice}
+                  </span>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-neutral-900">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                  Description
+                </h4>
+                <p className="text-neutral-300 text-sm leading-relaxed">
+                  {product.description ||
+                    "Heavyweight drop-shoulder street silhouette designed for high durability and casual fit."}
+                </p>
+              </div>
+
+              {product.sizes && product.sizes.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <label className="block text-xs font-black uppercase tracking-widest text-neutral-300">
+                    Select Size
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((size: string) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-5 py-3 text-xs font-black uppercase tracking-widest transition border ${
+                          selectedSize === size
+                            ? "bg-[#FF5500] text-white border-[#FF5500]"
+                            : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4">
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full text-xs font-black uppercase tracking-widest py-5 bg-[#FF5500] text-white hover:bg-[#e04b00] transition flex items-center justify-center gap-2"
                 >
-                  <div className="aspect-[4/5] bg-neutral-900 relative overflow-hidden">
-                    <img
-                      src={displayImage}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                    <span className="absolute top-3 left-3 bg-[#FF5500] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1">
-                      NEW DROP
-                    </span>
-                  </div>
-
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500 block mb-1">
-                        {product.category || "STREETWEAR"}
-                      </span>
-                      <h3 className="font-bold text-base text-white group-hover:text-[#FF5500] transition line-clamp-2">
-                        {product.name}
-                      </h3>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-neutral-900">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-black text-white">₹{product.price}</span>
-                        {product.originalPrice && (
-                          <span className="text-xs font-bold text-neutral-500 line-through">
-                            ₹{product.originalPrice}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] flex items-center gap-1">
-                        <ShoppingBag className="w-3.5 h-3.5" /> BUY NOW
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Trust Highlights */}
-      <section className="border-t border-neutral-800 bg-neutral-950 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-          <div className="flex items-center gap-4 justify-center md:justify-start">
-            <Truck className="w-8 h-8 text-[#FF5500] shrink-0" />
-            <div>
-              <h4 className="text-xs font-black uppercase tracking-widest text-white">ALL INDIA SHIPPING</h4>
-              <p className="text-xs text-neutral-400 mt-1">Cash on delivery available nationwide.</p>
+                  <ShoppingBag className="w-4 h-4" /> ADD TO BAG
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4 justify-center md:justify-start">
-            <ShieldCheck className="w-8 h-8 text-[#FF5500] shrink-0" />
-            <div>
-              <h4 className="text-xs font-black uppercase tracking-widest text-white">VERIFIED QUALITY</h4>
-              <p className="text-xs text-neutral-400 mt-1">Heavyweight combed cotton blend fabrics.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 justify-center md:justify-start">
-            <RotateCcw className="w-8 h-8 text-[#FF5500] shrink-0" />
-            <div>
-              <h4 className="text-xs font-black uppercase tracking-widest text-white">EASY EXCHANGES</h4>
-              <p className="text-xs text-neutral-400 mt-1">Hassle-free 7-day doorstep replacement.</p>
+
+            <div className="border-t border-neutral-800 pt-6 space-y-3">
+              <div className="flex items-center gap-3 text-xs text-neutral-400 font-bold">
+                <Truck className="w-4 h-4 text-[#FF5500]" /> Express Cash on Delivery Nationwide
+              </div>
+              <div className="flex items-center gap-3 text-xs text-neutral-400 font-bold">
+                <ShieldCheck className="w-4 h-4 text-[#FF5500]" /> 100% Heavyweight Combed Cotton
+              </div>
+              <div className="flex items-center gap-3 text-xs text-neutral-400 font-bold">
+                <RotateCcw className="w-4 h-4 text-[#FF5500]" /> Hassle-Free Doorstep Exchanges
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
+  );
+}
+
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <p className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
+            LOADING PRODUCT...
+          </p>
+        </div>
+      }
+    >
+      <ProductDetailContent paramsPromise={params} />
+    </Suspense>
   );
 }
