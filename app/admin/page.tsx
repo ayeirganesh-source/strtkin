@@ -4,11 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  CheckCircle2,
-  Clock,
-  Phone,
   Trash2,
-  PackageCheck,
   Plus,
   Edit,
   ShoppingBag,
@@ -22,7 +18,7 @@ import {
 const DEFAULT_PRODUCTS = [
   {
     id: "1",
-    name: "Urban Royal \"Enjoy The Madness\" Oversized Tee",
+    name: 'Urban Royal "Enjoy The Madness" Oversized Tee',
     category: "t-shirts",
     price: 799,
     originalPrice: 1299,
@@ -42,8 +38,6 @@ export default function AdminDashboardPage() {
 
   const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("ORDERS");
   const [orders, setOrders] = useState<any[]>([]);
-  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
-
   const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
@@ -79,7 +73,6 @@ export default function AdminDashboardPage() {
     if (savedProducts) {
       try {
         const parsed = JSON.parse(savedProducts);
-        // Normalize single image properties to array
         const normalized = parsed.map((p: any) => ({
           ...p,
           images: p.images && p.images.length > 0 ? p.images : [p.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"]
@@ -139,7 +132,14 @@ export default function AdminDashboardPage() {
     setIsModalOpen(true);
   };
 
-  // Support multiple image files upload from gallery
+  const handleDeleteProduct = (id: string) => {
+    if (confirm("Are you sure you want to delete this product from your storefront?")) {
+      const updated = products.filter((p) => p.id !== id);
+      setProducts(updated);
+      localStorage.setItem("strtkin_products", JSON.stringify(updated));
+    }
+  };
+
   const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -345,6 +345,13 @@ export default function AdminDashboardPage() {
                     >
                       <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="bg-red-950/40 border border-red-900/50 text-red-400 hover:bg-red-600 hover:text-white text-xs uppercase tracking-wider px-3 py-2 font-bold transition flex items-center justify-center"
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -352,7 +359,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* MODAL WITH MULTIPLE GALLERY UPLOADER */}
+        {/* MODAL */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
@@ -408,10 +415,9 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Multiple Gallery File Upload */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Upload Photos From Gallery (Select Multiple)
+                    Upload Photos From Gallery
                   </label>
                   
                   <label className="w-full cursor-pointer bg-neutral-950 border border-dashed border-neutral-700 hover:border-[#FF5500] p-4 text-center transition flex flex-col items-center justify-center gap-1 mb-3">
@@ -426,7 +432,6 @@ export default function AdminDashboardPage() {
                     />
                   </label>
 
-                  {/* Thumbnail Previews with Remove Button */}
                   {formData.images.length > 0 && (
                     <div className="grid grid-cols-4 gap-2 pt-2">
                       {formData.images.map((img, idx) => (

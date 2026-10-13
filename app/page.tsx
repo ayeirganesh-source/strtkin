@@ -1,56 +1,174 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ShoppingBag, ArrowRight, ShieldCheck, Truck, RotateCcw } from "lucide-react";
+
+const DEFAULT_PRODUCTS = [
+  {
+    id: "1",
+    name: "Urban Royal \"Enjoy The Madness\" Oversized Tee",
+    category: "t-shirts",
+    price: 799,
+    originalPrice: 1299,
+    description: "Premium cotton blend oversized drop-shoulder t-shirt in beige with a bold back graphic print.",
+    sizes: ["M", "L", "XL"],
+    images: [
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"
+    ],
+  },
+];
 
 export default function HomePage() {
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("strtkin_products");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setProducts(parsed);
+      } catch (e) {
+        console.error("Failed to parse products", e);
+        setProducts(DEFAULT_PRODUCTS);
+      }
+    } else {
+      setProducts(DEFAULT_PRODUCTS);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white">
-      {/* Hero Banner Section */}
-      <section className="relative min-h-[calc(100vh-115px)] flex items-end justify-start overflow-hidden bg-neutral-950">
-        {/* Background Image Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=2000&auto=format&fit=crop"
-            alt="Streetwear City Background"
-            className="w-full h-full object-cover object-center opacity-40 filter contrast-125"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+      {/* Hero Section */}
+      <section className="relative border-b border-neutral-800 bg-neutral-950 py-20 lg:py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-2xl space-y-6">
+            <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-3 py-1">
+              NEW SEASON DROP 2026
+            </span>
+            <h1 className="text-5xl sm:text-7xl font-black uppercase tracking-tighter leading-none text-white">
+              HEAVYWEIGHT <br />
+              <span className="text-[#FF5500]">STREETWEAR</span>
+            </h1>
+            <p className="text-neutral-400 text-sm sm:text-base leading-relaxed">
+              Designed for maximum comfort and durability. Premium drop-shoulder oversized fits crafted with heavy 240+ GSM fabrics and bold artistic prints.
+            </p>
+            <div className="pt-4 flex flex-wrap gap-4">
+              <Link
+                href="/shop"
+                className="bg-[#FF5500] text-white text-xs font-black uppercase tracking-widest px-8 py-4 hover:bg-[#e04b00] transition flex items-center gap-2"
+              >
+                EXPLORE CATALOG <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Storefront Catalog Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex justify-between items-end mb-10 pb-4 border-b border-neutral-800">
+          <div>
+            <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
+              STRTKIN STOREFRONT
+            </span>
+            <h2 className="text-3xl font-black uppercase tracking-tight text-white mt-1">
+              LATEST COLLECTION
+            </h2>
+          </div>
+          <Link
+            href="/shop"
+            className="text-xs font-black uppercase tracking-widest text-neutral-400 hover:text-white transition flex items-center gap-1"
+          >
+            VIEW ALL <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 pt-32 w-full">
-          {/* Tag */}
-          <div className="text-[#FF5500] text-xs font-extrabold tracking-widest uppercase mb-4 flex items-center gap-2">
-            <span>DROP 04 — CONCRETE SEASON</span>
+        {products.length === 0 ? (
+          <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+              No products uploaded yet. Add products via /admin dashboard.
+            </p>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product) => {
+              const displayImage =
+                product.images && product.images.length > 0
+                  ? product.images[0]
+                  : product.image;
 
-          {/* Headline */}
-          <h1 className="text-6xl sm:text-8xl md:text-9xl font-black uppercase tracking-tighter leading-none mb-6 max-w-4xl text-neutral-100">
-            BORN ON <br />
-            THE STREET<span className="inline-block w-4 h-4 sm:w-6 sm:h-6 bg-[#FF5500] ml-2 align-baseline" />
-          </h1>
+              return (
+                <Link
+                  key={product.id}
+                  href={`/shop/${product.id}`}
+                  className="group border border-neutral-800 bg-neutral-950 overflow-hidden hover:border-[#FF5500] transition flex flex-col"
+                >
+                  <div className="aspect-[4/5] bg-neutral-900 relative overflow-hidden">
+                    <img
+                      src={displayImage}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    />
+                    <span className="absolute top-3 left-3 bg-[#FF5500] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1">
+                      NEW DROP
+                    </span>
+                  </div>
 
-          {/* Description */}
-          <p className="text-sm sm:text-base text-neutral-300 max-w-lg mb-8 font-medium leading-relaxed">
-            Heavyweight essentials and statement outerwear, cut in India for the city-born. Built to be worn hard.
-          </p>
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500 block mb-1">
+                        {product.category || "TEES"}
+                      </span>
+                      <h3 className="font-bold text-base text-white group-hover:text-[#FF5500] transition line-clamp-2">
+                        {product.name}
+                      </h3>
+                    </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href="/shop"
-              className="bg-[#FF5500] text-white text-xs uppercase tracking-widest px-8 py-4 font-extrabold hover:bg-[#e04b00] transition flex items-center gap-2"
-            >
-              Shop The Drop <ArrowRight className="w-4 h-4" />
-            </Link>
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-900">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-black text-white">₹{product.price}</span>
+                        {product.originalPrice && (
+                          <span className="text-xs font-bold text-neutral-500 line-through">
+                            ₹{product.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] flex items-center gap-1">
+                        <ShoppingBag className="w-3.5 h-3.5" /> BUY NOW
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-            <Link
-              href="/about"
-              className="border border-neutral-600 bg-black/40 backdrop-blur-sm text-white text-xs uppercase tracking-widest px-8 py-4 font-bold hover:bg-white hover:text-black transition"
-            >
-              Our Story
-            </Link>
+      {/* Trust Highlights */}
+      <section className="border-t border-neutral-800 bg-neutral-950 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+          <div className="flex items-center gap-4 justify-center md:justify-start">
+            <Truck className="w-8 h-8 text-[#FF5500] shrink-0" />
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white">ALL INDIA SHIPPING</h4>
+              <p className="text-xs text-neutral-400 mt-1">Cash on delivery available nationwide.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 justify-center md:justify-start">
+            <ShieldCheck className="w-8 h-8 text-[#FF5500] shrink-0" />
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white">VERIFIED QUALITY</h4>
+              <p className="text-xs text-neutral-400 mt-1">Heavyweight combed cotton blend fabrics.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 justify-center md:justify-start">
+            <RotateCcw className="w-8 h-8 text-[#FF5500] shrink-0" />
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white">EASY EXCHANGES</h4>
+              <p className="text-xs text-neutral-400 mt-1">Hassle-free 7-day doorstep replacement.</p>
+            </div>
           </div>
         </div>
       </section>
