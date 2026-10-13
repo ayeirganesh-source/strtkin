@@ -22,60 +22,28 @@ import {
 const DEFAULT_PRODUCTS = [
   {
     id: "1",
-    name: "Oversized Heavyweight Black Tee",
+    name: "Urban Royal \"Enjoy The Madness\" Oversized Tee",
     category: "t-shirts",
     price: 799,
     originalPrice: 1299,
-    description: "Premium 240 GSM 100% combed cotton oversized t-shirt.",
-    sizes: ["S", "M", "L", "XL"],
-    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
-  },
-  {
-    id: "2",
-    name: "Classic Oxford White Button-Down",
-    category: "shirts",
-    price: 1499,
-    originalPrice: 2499,
-    description: "Tailored Oxford woven cotton shirt.",
-    sizes: ["S", "M", "L", "XL"],
-    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=60",
-  },
-  {
-    id: "3",
-    name: "Slim Fit Raw Indigo Denim Jeans",
-    category: "jeans",
-    price: 1999,
-    originalPrice: 3499,
-    description: "Heavy-duty 14oz raw stretch denim.",
-    sizes: ["30", "32", "34", "36"],
-    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&auto=format&fit=crop&q=60",
-  },
-  {
-    id: "4",
-    name: "Minimalist Black Hoodie",
-    category: "hoodies",
-    price: 2199,
-    originalPrice: 3799,
-    description: "Ultra-soft fleece-lined hoodie.",
-    sizes: ["S", "M", "L", "XL"],
-    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=60",
+    description: "Premium cotton blend oversized drop-shoulder t-shirt in beige with a bold back graphic print.",
+    sizes: ["M", "L", "XL"],
+    images: [
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"
+    ],
   },
 ];
 
 export default function AdminDashboardPage() {
-  // Admin Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState("");
 
   const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("ORDERS");
-
-  // Orders State
   const [orders, setOrders] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
 
-  // Products State
   const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
@@ -86,11 +54,10 @@ export default function AdminDashboardPage() {
     price: "",
     originalPrice: "",
     description: "",
-    sizes: "S, M, L, XL",
-    image: "",
+    sizes: "M, L, XL",
+    images: [] as string[],
   });
 
-  // Check auth session
   useEffect(() => {
     const authStatus = sessionStorage.getItem("strtkin_admin_auth");
     if (authStatus === "true") {
@@ -98,7 +65,6 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  // Load Orders & Products from LocalStorage
   useEffect(() => {
     const savedOrders = localStorage.getItem("strtkin_orders");
     if (savedOrders) {
@@ -112,7 +78,13 @@ export default function AdminDashboardPage() {
     const savedProducts = localStorage.getItem("strtkin_products");
     if (savedProducts) {
       try {
-        setProducts(JSON.parse(savedProducts));
+        const parsed = JSON.parse(savedProducts);
+        // Normalize single image properties to array
+        const normalized = parsed.map((p: any) => ({
+          ...p,
+          images: p.images && p.images.length > 0 ? p.images : [p.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"]
+        }));
+        setProducts(normalized);
       } catch (e) {
         console.error("Failed to parse products", e);
         setProducts(DEFAULT_PRODUCTS);
@@ -123,7 +95,6 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  // Login handler
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (usernameInput === "admin" && passwordInput === "strtkin2026") {
@@ -140,28 +111,6 @@ export default function AdminDashboardPage() {
     sessionStorage.removeItem("strtkin_admin_auth");
   };
 
-  // Order Operations
-  const updateOrderStatus = (id: string, newStatus: string) => {
-    const updated = orders.map((order) =>
-      order.id === id ? { ...order, status: newStatus } : order
-    );
-    setOrders(updated);
-    localStorage.setItem("strtkin_orders", JSON.stringify(updated));
-  };
-
-  const handleDeleteOrder = (id: string) => {
-    const updated = orders.filter((order) => order.id !== id);
-    setOrders(updated);
-    localStorage.setItem("strtkin_orders", JSON.stringify(updated));
-  };
-
-  const filteredOrders = orders.filter((order) => {
-    if (orderFilter === "PENDING") return order.status !== "CONFIRMED & FORWARDED" && order.status !== "CONFIRMED";
-    if (orderFilter === "CONFIRMED") return order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED";
-    return true;
-  });
-
-  // Product Operations
   const openCreateModal = () => {
     setEditingProduct(null);
     setFormData({
@@ -170,8 +119,8 @@ export default function AdminDashboardPage() {
       price: "",
       originalPrice: "",
       description: "",
-      sizes: "S, M, L, XL",
-      image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
+      sizes: "M, L, XL",
+      images: [],
     });
     setIsModalOpen(true);
   };
@@ -185,27 +134,37 @@ export default function AdminDashboardPage() {
       originalPrice: String(product.originalPrice || ""),
       description: product.description || "",
       sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes,
-      image: product.image,
+      images: product.images || (product.image ? [product.image] : []),
     });
     setIsModalOpen(true);
   };
 
-  // Direct Gallery File Upload Reader
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+  // Support multiple image files upload from gallery
+  const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const readers: Promise<string>[] = Array.from(files).map((file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(readers).then((newImages) => {
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, ...newImages],
+        }));
+      });
     }
   };
 
-  const handleDeleteProduct = (id: string) => {
-    const updated = products.filter((p) => p.id !== id);
-    setProducts(updated);
-    localStorage.setItem("strtkin_products", JSON.stringify(updated));
+  const removeImageAt = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
@@ -219,7 +178,8 @@ export default function AdminDashboardPage() {
       originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.5,
       description: formData.description,
       sizes: formData.sizes.split(",").map((s) => s.trim()),
-      image: formData.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
+      images: formData.images.length > 0 ? formData.images : ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"],
+      image: formData.images[0] || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
     };
 
     let updatedProducts;
@@ -234,7 +194,6 @@ export default function AdminDashboardPage() {
     setIsModalOpen(false);
   };
 
-  // 1. LOGIN GATE IF NOT AUTHENTICATED
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
@@ -284,7 +243,6 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // 2. MAIN ADMIN DASHBOARD
   return (
     <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
@@ -341,141 +299,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* ORDERS TAB */}
-        {activeAdminTab === "ORDERS" && (
-          <div className="space-y-6">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setOrderFilter("ALL")}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
-                  orderFilter === "ALL"
-                    ? "bg-white text-black border-white"
-                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
-                }`}
-              >
-                All Orders ({orders.length})
-              </button>
-              <button
-                onClick={() => setOrderFilter("PENDING")}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
-                  orderFilter === "PENDING"
-                    ? "bg-white text-black border-white"
-                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
-                }`}
-              >
-                Pending Verification
-              </button>
-              <button
-                onClick={() => setOrderFilter("CONFIRMED")}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
-                  orderFilter === "CONFIRMED"
-                    ? "bg-white text-black border-white"
-                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
-                }`}
-              >
-                Confirmed & Forwarded
-              </button>
-            </div>
-
-            {filteredOrders.length === 0 ? (
-              <div className="border border-neutral-800 bg-neutral-900/40 p-16 text-center space-y-3">
-                <PackageCheck className="w-10 h-10 text-neutral-600 mx-auto" />
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
-                  No Customer Orders Found
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="border border-neutral-800 bg-neutral-900/60 p-6 space-y-4 hover:border-neutral-700 transition"
-                  >
-                    <div className="flex flex-wrap justify-between items-center gap-4 pb-4 border-b border-neutral-800">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-black uppercase tracking-tight text-white">
-                          {order.id}
-                        </span>
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest ${
-                            order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED"
-                              ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                          }`}
-                        >
-                          {order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED" ? (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          ) : (
-                            <Clock className="w-3.5 h-3.5" />
-                          )}
-                          {order.status}
-                        </span>
-                      </div>
-                      <span className="text-xs text-neutral-500">{order.date}</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block mb-1">
-                          Customer Info
-                        </span>
-                        <span className="font-bold block text-neutral-200">{order.customer?.name}</span>
-                        <span className="text-xs font-semibold text-[#FF5500]">{order.customer?.phone}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block mb-1">
-                          Delivery Address
-                        </span>
-                        <span className="text-xs text-neutral-400 leading-relaxed block">
-                          {order.customer?.address}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap justify-between items-center pt-3 border-t border-neutral-800/80 gap-2">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block mb-0.5">
-                          Items
-                        </span>
-                        <span className="text-xs font-medium text-neutral-300">{order.items}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs text-neutral-400">Total: </span>
-                        <span className="text-lg font-black text-white">₹{order.total}</span>
-                        <span className="text-[10px] text-neutral-500 block">(COD)</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 pt-2">
-                      {order.status !== "CONFIRMED & FORWARDED" && order.status !== "CONFIRMED" && (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "CONFIRMED & FORWARDED")}
-                          className="bg-[#FF5500] text-white text-xs uppercase tracking-widest px-5 py-2.5 font-extrabold hover:bg-[#e04b00] transition flex items-center gap-2"
-                        >
-                          <CheckCircle2 className="w-4 h-4" /> Confirm Order
-                        </button>
-                      )}
-                      <a
-                        href={`tel:${order.customer?.phone}`}
-                        className="border border-neutral-700 text-neutral-300 text-xs uppercase tracking-widest px-5 py-2.5 font-bold hover:bg-neutral-800 transition flex items-center gap-2"
-                      >
-                        <Phone className="w-3.5 h-3.5" /> Call Customer
-                      </a>
-                      <button
-                        onClick={() => handleDeleteOrder(order.id)}
-                        className="p-2.5 text-neutral-500 hover:text-red-500 transition ml-auto"
-                        title="Delete Order"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* PRODUCTS TAB */}
         {activeAdminTab === "PRODUCTS" && (
           <div className="space-y-6">
@@ -499,23 +322,19 @@ export default function AdminDashboardPage() {
                 >
                   <div className="aspect-[4/3] bg-neutral-950 overflow-hidden relative border border-neutral-800">
                     <img
-                      src={product.image}
+                      src={product.images && product.images.length > 0 ? product.images[0] : product.image}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
                     <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-neutral-800">
-                      {product.category}
+                      {product.images?.length || 1} Photo(s)
                     </span>
                   </div>
 
                   <div className="space-y-1">
                     <h3 className="font-bold text-sm text-white truncate">{product.name}</h3>
-                    <p className="text-xs text-neutral-400 line-clamp-2">{product.description}</p>
                     <div className="flex items-center gap-3 pt-2">
                       <span className="font-black text-white">₹{product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-xs text-neutral-500 line-through">₹{product.originalPrice}</span>
-                      )}
                     </div>
                   </div>
 
@@ -526,13 +345,6 @@ export default function AdminDashboardPage() {
                     >
                       <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
-                    <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="p-2 border border-neutral-800 text-neutral-400 hover:text-red-500 hover:border-red-500 transition"
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               ))}
@@ -540,7 +352,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* MODAL WITH GALLERY UPLOADER */}
+        {/* MODAL WITH MULTIPLE GALLERY UPLOADER */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
@@ -566,27 +378,10 @@ export default function AdminDashboardPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                    placeholder="e.g. Heavyweight Boxy Tee"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                      Category
-                    </label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                    >
-                      <option value="t-shirts">Tees</option>
-                      <option value="shirts">Shirts</option>
-                      <option value="jeans">Jeans</option>
-                      <option value="hoodies">Hoodies</option>
-                    </select>
-                  </div>
-
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
                       Price (₹)
@@ -597,45 +392,57 @@ export default function AdminDashboardPage() {
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                      placeholder="799"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                      Sizes
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sizes}
+                      onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                      className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
                     />
                   </div>
                 </div>
 
+                {/* Multiple Gallery File Upload */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Upload Photo From Gallery (Phone or Laptop)
+                    Upload Photos From Gallery (Select Multiple)
                   </label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex-1 cursor-pointer bg-neutral-950 border border-dashed border-neutral-700 hover:border-[#FF5500] p-4 text-center transition flex flex-col items-center justify-center gap-1">
-                      <Upload className="w-5 h-5 text-[#FF5500]" />
-                      <span className="text-xs font-bold text-neutral-300">Select Gallery Photo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    {formData.image && (
-                      <div className="w-16 h-16 bg-neutral-950 border border-neutral-800 overflow-hidden shrink-0">
-                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  
+                  <label className="w-full cursor-pointer bg-neutral-950 border border-dashed border-neutral-700 hover:border-[#FF5500] p-4 text-center transition flex flex-col items-center justify-center gap-1 mb-3">
+                    <Upload className="w-5 h-5 text-[#FF5500]" />
+                    <span className="text-xs font-bold text-neutral-300">Click to Select Photos</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleMultipleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Sizes (Comma Separated)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.sizes}
-                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                    placeholder="S, M, L, XL"
-                  />
+                  {/* Thumbnail Previews with Remove Button */}
+                  {formData.images.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 pt-2">
+                      {formData.images.map((img, idx) => (
+                        <div key={idx} className="relative aspect-square border border-neutral-800 bg-neutral-950 group">
+                          <img src={img} alt={`Upload ${idx}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImageAt(idx)}
+                            className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full text-xs opacity-90 hover:opacity-100"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -643,11 +450,10 @@ export default function AdminDashboardPage() {
                     Description
                   </label>
                   <textarea
-                    rows={3}
+                    rows={4}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                    placeholder="Short product description..."
                   />
                 </div>
 
