@@ -8,7 +8,7 @@ export default function Header() {
 
   return (
     <>
-      {/* Single Clean Top Black Banner */}
+      {/* Top Black Banner */}
       <div className="bg-black text-white text-[11px] font-bold tracking-widest uppercase py-2.5 text-center border-b border-neutral-800">
         CASH ON DELIVERY AVAILABLE ACROSS INDIA • FREE SHIPPING ON ORDERS OVER ₹1,999
       </div>
@@ -21,12 +21,13 @@ export default function Header() {
             STRTKIN<span className="text-[#FF5500]">.in</span>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Navigation Links with Category Query Params */}
           <nav className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-neutral-800">
             <Link href="/shop" className="hover:text-[#FF5500] transition">Shop All</Link>
-            <Link href="/shop?category=tees" className="hover:text-[#FF5500] transition">Tees</Link>
+            <Link href="/shop?category=t-shirts" className="hover:text-[#FF5500] transition">Tees</Link>
+            <Link href="/shop?category=shirts" className="hover:text-[#FF5500] transition">Shirts</Link>
+            <Link href="/shop?category=jeans" className="hover:text-[#FF5500] transition">Jeans</Link>
             <Link href="/shop?category=hoodies" className="hover:text-[#FF5500] transition">Hoodies</Link>
-            <Link href="/shop?category=outerwear" className="hover:text-[#FF5500] transition">Outerwear</Link>
           </nav>
 
           {/* Shopping Bag Icon */}
