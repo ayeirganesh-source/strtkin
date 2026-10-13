@@ -6,101 +6,93 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
-  quantity: number;
   size: string;
-  color?: string;
-  image?: string;
+  image: string;
+  quantity: number;
 }
 
 interface CartContextType {
-  cartItems: CartItem[];
+  cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  updateQuantity: (id: string, size: string, newQuantity: number) => void;
   removeFromCart: (id: string, size: string) => void;
+  updateQuantity: (id: string, size: string, quantity: number) => void;
   clearCart: () => void;
-  totalItems: number;
+  totalPrice: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   // Load cart from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("strtkin_cart");
     if (saved) {
       try {
-        setCartItems(JSON.parse(saved));
+        setCart(JSON.parse(saved));
       } catch (e) {
         console.error("Failed to parse cart", e);
       }
     }
   }, []);
 
-  // Save cart to localStorage on state update
-  useEffect(() => {
-    localStorage.setItem("strtkin_cart", JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  const addToCart = (newItem: CartItem) => {
-    setCartItems((prev) => {
-      const existingIndex = prev.findIndex(
-        (item) => item.id === newItem.id && item.size === newItem.size
-      );
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex].quantity += newItem.quantity;
-        return updated;
-      }
-      return [...prev, newItem];
-    });
+  // Save cart changes to localStorage
+  const saveCart = (newCart: CartItem[]) => {
+    setCart(newCart);
+    localStorage.setItem("strtkin_cart", JSON.stringify(newCart));
   };
 
-  const updateQuantity = (id: string, size: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(id, size);
-      return;
-    }
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id && item.size === size
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
+  const addToCart = (item: CartItem) => {
+    const existingIndex = cart.findIndex(
+      (i) => i.id === item.id && i.size === item.size
     );
+
+    if (existingIndex > -1) {
+      const updated = [...cart];
+      updated[existingIndex].quantity += item.quantity;
+      saveCart(updated);
+    } else {
+      saveCart([...cart, item]);
+    }
   };
 
   const removeFromCart = (id: string, size: string) => {
-    setCartItems((prev) =>
-      prev.filter((item) => !(item.id === id && item.size === size))
-    );
+    const updated = cart.filter((i) => !(i.id === id && i.size === size));
+    saveCart(updated);
   };
 
-  const clearCart = () => setCartItems([]);
+  const updateQuantity = (id: string, size: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(id, size);
+      return;
+    }
+    const updated = cart.map((i) =>
+      i.id === id && i.size === size ? { ...i, quantity } : i
+    );
+    saveCart(updated);
+  };
 
-  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const clearCart = () => {
+    saveCart([]);
+    localStorage.removeItem("strtkin_cart");
+  };
+
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <CartContext.Provider
-      value={{
-        cartItems,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        totalItems,
-      }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice }}
     >
       {children}
     </CartContext.Provider>
   );
-};
+}
 
-export const useCart = () => {
+export function useCart() {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;
-};
+}

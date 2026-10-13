@@ -15,6 +15,8 @@ import {
   Package,
   X,
   Upload,
+  Lock,
+  LogOut,
 } from "lucide-react";
 
 const DEFAULT_PRODUCTS = [
@@ -61,6 +63,12 @@ const DEFAULT_PRODUCTS = [
 ];
 
 export default function AdminDashboardPage() {
+  // Admin Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState("");
+
   const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("ORDERS");
 
   // Orders State
@@ -81,6 +89,14 @@ export default function AdminDashboardPage() {
     sizes: "S, M, L, XL",
     image: "",
   });
+
+  // Check auth session
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem("strtkin_admin_auth");
+    if (authStatus === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   // Load Orders & Products from LocalStorage
   useEffect(() => {
@@ -106,6 +122,23 @@ export default function AdminDashboardPage() {
       localStorage.setItem("strtkin_products", JSON.stringify(DEFAULT_PRODUCTS));
     }
   }, []);
+
+  // Login handler
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (usernameInput === "admin" && passwordInput === "strtkin2026") {
+      setIsAuthenticated(true);
+      sessionStorage.setItem("strtkin_admin_auth", "true");
+      setLoginError("");
+    } else {
+      setLoginError("Invalid username or password credentials.");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem("strtkin_admin_auth");
+  };
 
   // Order Operations
   const updateOrderStatus = (id: string, newStatus: string) => {
@@ -157,7 +190,7 @@ export default function AdminDashboardPage() {
     setIsModalOpen(true);
   };
 
-  // Handle Image File Upload from Laptop / Phone
+  // Direct Gallery File Upload Reader
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -201,11 +234,60 @@ export default function AdminDashboardPage() {
     setIsModalOpen(false);
   };
 
+  // 1. LOGIN GATE IF NOT AUTHENTICATED
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full border border-neutral-800 bg-neutral-950 p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <Lock className="w-10 h-10 text-[#FF5500] mx-auto" />
+            <h1 className="text-2xl font-black uppercase tracking-tight">ADMIN ACCESS PORTAL</h1>
+            <p className="text-xs text-neutral-400">Enter secure administrative credentials to proceed.</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">USERNAME</label>
+              <input
+                type="text"
+                required
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                className="w-full bg-neutral-900 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                placeholder="admin"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">PASSWORD</label>
+              <input
+                type="password"
+                required
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full bg-neutral-900 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {loginError && <p className="text-xs text-red-500 font-semibold">{loginError}</p>}
+
+            <button
+              type="submit"
+              className="w-full bg-[#FF5500] text-white text-xs font-black uppercase tracking-widest py-4 hover:bg-[#e04b00] transition"
+            >
+              UNLOCK ADMIN DASHBOARD
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. MAIN ADMIN DASHBOARD
   return (
     <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        
-        {/* Navigation Top Bar */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-neutral-800 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -223,37 +305,43 @@ export default function AdminDashboardPage() {
             <h1 className="text-4xl font-black uppercase tracking-tight text-white">
               STRTKIN Control Center
             </h1>
-            <p className="text-xs text-neutral-400 mt-1">
-              Manage live customer orders, verify Cash on Delivery, and edit product catalog items.
-            </p>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex bg-neutral-900 border border-neutral-800 p-1">
+          <div className="flex items-center gap-3">
+            <div className="flex bg-neutral-900 border border-neutral-800 p-1">
+              <button
+                onClick={() => setActiveAdminTab("ORDERS")}
+                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                  activeAdminTab === "ORDERS"
+                    ? "bg-[#FF5500] text-white shadow-lg"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                <ShoppingBag className="w-4 h-4" /> Orders ({orders.length})
+              </button>
+              <button
+                onClick={() => setActiveAdminTab("PRODUCTS")}
+                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                  activeAdminTab === "PRODUCTS"
+                    ? "bg-[#FF5500] text-white shadow-lg"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                <Package className="w-4 h-4" /> Products ({products.length})
+              </button>
+            </div>
+
             <button
-              onClick={() => setActiveAdminTab("ORDERS")}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                activeAdminTab === "ORDERS"
-                  ? "bg-[#FF5500] text-white shadow-lg"
-                  : "text-neutral-400 hover:text-white"
-              }`}
+              onClick={handleLogout}
+              className="p-3 border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white transition"
+              title="Logout"
             >
-              <ShoppingBag className="w-4 h-4" /> Orders ({orders.length})
-            </button>
-            <button
-              onClick={() => setActiveAdminTab("PRODUCTS")}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                activeAdminTab === "PRODUCTS"
-                  ? "bg-[#FF5500] text-white shadow-lg"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              <Package className="w-4 h-4" /> Products ({products.length})
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* TAB 1: ORDERS MANAGEMENT */}
+        {/* ORDERS TAB */}
         {activeAdminTab === "ORDERS" && (
           <div className="space-y-6">
             <div className="flex flex-wrap gap-2">
@@ -388,7 +476,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 2: PRODUCT MANAGEMENT */}
+        {/* PRODUCTS TAB */}
         {activeAdminTab === "PRODUCTS" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -452,7 +540,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* EDIT / ADD PRODUCT MODAL WITH FILE UPLOADER */}
+        {/* MODAL WITH GALLERY UPLOADER */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
@@ -514,15 +602,14 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* File Upload from Device */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Upload Product Image (From Laptop / Phone)
+                    Upload Photo From Gallery (Phone or Laptop)
                   </label>
                   <div className="flex items-center gap-4">
                     <label className="flex-1 cursor-pointer bg-neutral-950 border border-dashed border-neutral-700 hover:border-[#FF5500] p-4 text-center transition flex flex-col items-center justify-center gap-1">
                       <Upload className="w-5 h-5 text-[#FF5500]" />
-                      <span className="text-xs font-bold text-neutral-300">Choose Image File</span>
+                      <span className="text-xs font-bold text-neutral-300">Select Gallery Photo</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -574,7 +661,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

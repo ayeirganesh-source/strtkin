@@ -1,52 +1,55 @@
 "use client";
 
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 export default function Header() {
-  const { totalItems } = useCart();
+  const { cart } = useCart();
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <>
       {/* Top Black Banner */}
-      <div className="bg-black text-white text-[11px] font-bold tracking-widest uppercase py-2.5 text-center border-b border-neutral-800">
+      <div className="bg-black text-white text-[11px] font-black uppercase tracking-widest text-center py-2 border-b border-neutral-900">
         CASH ON DELIVERY AVAILABLE ACROSS INDIA • FREE SHIPPING ON ORDERS OVER ₹1,999
       </div>
 
       {/* Main Navigation Header */}
-      <header className="bg-[#FAF9F6] text-black border-b border-neutral-200 sticky top-0 z-50">
+      <header className="bg-black text-white border-b border-neutral-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          
           {/* Logo */}
-          <Link href="/" className="text-3xl font-black tracking-tighter uppercase flex items-center">
-            STRTKIN<span className="text-[#FF5500]">.in</span>
+          <Link href="/shop" className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
+            STRTKIN<span className="text-[#FF5500]">.IN</span>
           </Link>
 
-          {/* Navigation Links with Category Query Params */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-neutral-800">
-            <Link href="/shop" className="hover:text-[#FF5500] transition">Shop All</Link>
-            <Link href="/shop?category=t-shirts" className="hover:text-[#FF5500] transition">Tees</Link>
-            <Link href="/shop?category=shirts" className="hover:text-[#FF5500] transition">Shirts</Link>
-            <Link href="/shop?category=jeans" className="hover:text-[#FF5500] transition">Jeans</Link>
-            <Link href="/shop?category=hoodies" className="hover:text-[#FF5500] transition">Hoodies</Link>
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-xs font-extrabold uppercase tracking-widest text-neutral-300">
+            <Link href="/shop" className="hover:text-white transition">Shop All</Link>
+            <Link href="/shop?category=t-shirts" className="hover:text-white transition">Tees</Link>
+            <Link href="/shop?category=shirts" className="hover:text-white transition">Shirts</Link>
+            <Link href="/shop?category=jeans" className="hover:text-white transition">Jeans</Link>
+            <Link href="/shop?category=hoodies" className="hover:text-white transition">Hoodies</Link>
+            <Link href="/about" className="hover:text-white transition">About</Link>
           </nav>
 
-          {/* Shopping Bag Icon */}
-          <Link
-            href="/cart"
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-[#FF5500] transition"
-          >
-            <span>BAG</span>
-            <div className="relative">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
+          {/* Cart Bag Icon */}
+          <div className="flex items-center gap-4">
+            <Link
+              href="/cart"
+              className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-4 py-2.5 hover:border-[#FF5500] transition"
+            >
+              <ShoppingBag className="w-4 h-4 text-[#FF5500]" />
+              <span className="text-xs font-black uppercase tracking-widest">BAG</span>
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#FF5500] text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="bg-[#FF5500] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
                   {totalItems}
                 </span>
               )}
-            </div>
-          </Link>
+            </Link>
+          </div>
+
         </div>
       </header>
     </>

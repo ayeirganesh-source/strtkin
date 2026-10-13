@@ -24,13 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-black text-white antialiased selection:bg-[#FF5500] selection:text-white`}>
         <CartProvider>
-          {/* Dynamic Header */}
           <Header />
+          <main className="min-h-screen bg-black text-white">{children}</main>
 
-          {/* Main Content */}
-          <main className="min-h-screen">{children}</main>
-
-          {/* Dark Industrial Footer */}
           <footer className="bg-neutral-950 text-white pt-16 pb-12 border-t border-neutral-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
               <div>

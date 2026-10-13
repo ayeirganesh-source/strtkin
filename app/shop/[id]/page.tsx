@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ArrowLeft, ShoppingBag, ShieldCheck, Truck, Check } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
@@ -13,7 +13,7 @@ const DEFAULT_PRODUCTS = [
     category: "t-shirts",
     price: 799,
     originalPrice: 1299,
-    description: "Premium 240 GSM 100% combed cotton oversized t-shirt built for structure and durability.",
+    description: "Premium 240 GSM 100% combed cotton oversized t-shirt built for structure and comfort.",
     sizes: ["S", "M", "L", "XL"],
     image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
   },
@@ -51,7 +51,6 @@ const DEFAULT_PRODUCTS = [
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState<any>(null);
@@ -68,7 +67,7 @@ export default function ProductDetailPage() {
       try {
         allProducts = JSON.parse(saved);
       } catch (e) {
-        console.error("Failed to parse products from localStorage", e);
+        console.error("Failed to parse products", e);
       }
     }
 
@@ -123,7 +122,6 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-[#FF5500] selection:text-white pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* Back Link */}
         <div className="mb-8">
           <Link
             href="/shop"
@@ -133,9 +131,7 @@ export default function ProductDetailPage() {
           </Link>
         </div>
 
-        {/* Product Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Product Image */}
           <div className="aspect-[4/5] bg-neutral-950 overflow-hidden relative border border-neutral-800">
             <img
               src={product.image}
@@ -147,7 +143,6 @@ export default function ProductDetailPage() {
             </span>
           </div>
 
-          {/* Product Details & Actions */}
           <div className="space-y-8">
             <div>
               <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] block mb-2">
@@ -174,7 +169,6 @@ export default function ProductDetailPage() {
               {product.description}
             </p>
 
-            {/* Size Options */}
             <div className="space-y-3">
               <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest">
                 <span className="text-neutral-400">
@@ -200,7 +194,6 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Add to Shopping Bag */}
             <div className="space-y-4 pt-4">
               <button
                 onClick={handleAddToCart}
@@ -223,7 +216,6 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            {/* Guarantees */}
             <div className="space-y-3 pt-6 border-t border-neutral-800/80 text-xs font-medium text-neutral-400">
               <div className="flex items-center gap-3">
                 <Truck className="w-4 h-4 text-[#FF5500] shrink-0" />
