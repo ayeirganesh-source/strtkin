@@ -22,7 +22,7 @@ export default function CartPage() {
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const finalTotal = subtotal - discount;
+  const finalTotal = Math.max(0, subtotal - discount);
 
   if (cartItems.length === 0) {
     return (
@@ -62,25 +62,26 @@ export default function CartPage() {
                 <div className="font-bold text-sm pt-1">₹{item.price}</div>
               </div>
 
-              {/* Quantity Controls */}
+              {/* Quantity Controls - Fixed Call */}
               <div className="flex items-center border border-neutral-300">
                 <button
-                  onClick={() => updateQuantity(item.id, -1)}
+                  onClick={() => updateQuantity && updateQuantity(item.id, item.size, item.quantity - 1)}
                   className="px-3 py-1 text-sm font-bold hover:bg-neutral-100 transition"
                 >
                   -
                 </button>
                 <span className="px-3 py-1 text-sm font-semibold">{item.quantity}</span>
                 <button
-                  onClick={() => updateQuantity(item.id, 1)}
+                  onClick={() => updateQuantity && updateQuantity(item.id, item.size, item.quantity + 1)}
                   className="px-3 py-1 text-sm font-bold hover:bg-neutral-100 transition"
                 >
                   +
                 </button>
               </div>
 
+              {/* Trash Button - Fixed Call with Size */}
               <button
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeFromCart(item.id, item.size)}
                 className="p-2 text-neutral-400 hover:text-black transition"
                 title="Remove item"
               >
@@ -149,4 +150,3 @@ export default function CartPage() {
       </div>
     </div>
   );
-}
