@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Trash2, ArrowLeft, Package } from "lucide-react";
 
-// Initial product inventory for STRTKIN.in
 const INITIAL_PRODUCTS = [
   {
     id: 1,
@@ -42,6 +41,24 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Load products from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("strtkin_products");
+    if (saved) {
+      try {
+        setProducts(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse products", e);
+      }
+    }
+  }, []);
+
+  // Save products to localStorage on update
+  const updateProductsStorage = (updatedList: typeof INITIAL_PRODUCTS) => {
+    setProducts(updatedList);
+    localStorage.setItem("strtkin_products", JSON.stringify(updatedList));
+  };
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     category: "t-shirts",
@@ -65,7 +82,8 @@ export default function AdminProductsPage() {
       originalPrice: Number(newProduct.originalPrice),
       stock: Number(newProduct.stock),
     };
-    setProducts([productItem, ...products]);
+    const updated = [productItem, ...products];
+    updateProductsStorage(updated);
     setShowAddForm(false);
     setNewProduct({
       name: "",
@@ -79,7 +97,8 @@ export default function AdminProductsPage() {
   };
 
   const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter((p) => p.id !== id));
+    const updated = products.filter((p) => p.id !== id);
+    updateProductsStorage(updated);
   };
 
   return (

@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useCart } from "../context/CartContext";import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ArrowRight } from "lucide-react";
 
-const ALL_PRODUCTS = [
+const INITIAL_PRODUCTS = [
   {
     id: "1",
     name: "Oversized Heavyweight Black Tee",
     category: "t-shirts",
     price: 799,
     originalPrice: 1299,
+    description: "Premium 240 GSM 100% combed cotton oversized t-shirt. Built for comfort and an effortless street silhouette.",
+    sizes: ["S", "M", "L", "XL"],
     image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
   },
   {
@@ -20,6 +21,8 @@ const ALL_PRODUCTS = [
     category: "shirts",
     price: 1499,
     originalPrice: 2499,
+    description: "Tailored Oxford woven cotton shirt. Versatile look for elevated casualwear.",
+    sizes: ["S", "M", "L", "XL"],
     image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=60",
   },
   {
@@ -28,6 +31,8 @@ const ALL_PRODUCTS = [
     category: "jeans",
     price: 1999,
     originalPrice: 3499,
+    description: "Heavy-duty 14oz raw stretch denim. Modern slim tapered fit with custom branded hardware.",
+    sizes: ["30", "32", "34", "36"],
     image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&auto=format&fit=crop&q=60",
   },
   {
@@ -36,42 +41,46 @@ const ALL_PRODUCTS = [
     category: "hoodies",
     price: 2199,
     originalPrice: 3799,
+    description: "Ultra-soft fleece-lined hoodie featuring drop shoulders and double-layered hood structure.",
+    sizes: ["S", "M", "L", "XL"],
     image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=60",
   },
 ];
 
-function ShopContent() {
-  const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category");
-  const { addToCart } = useCart();
+export default function ShopPage() {
+  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam || "all");
+  // Load products from localStorage (synced with Admin Panel)
+  useEffect(() => {
+    const saved = localStorage.getItem("strtkin_products");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Normalize IDs to strings for routing compatibility
+        const normalized = parsed.map((p: any) => ({
+          ...p,
+          id: String(p.id),
+          sizes: typeof p.sizes === "string" ? p.sizes.split(", ").map((s: string) => s.trim()) : p.sizes,
+        }));
+        setProducts(normalized);
+      } catch (e) {
+        console.error("Failed to load products from storage", e);
+      }
+    }
+  }, []);
 
-  const filteredProducts =
-    selectedCategory === "all" || !selectedCategory
-      ? ALL_PRODUCTS
-      : ALL_PRODUCTS.filter((p) => p.category === selectedCategory);
-
-  const handleQuickAdd = (product: any, e: React.MouseEvent) => {
-    e.preventDefault();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      size: "L",
-      color: "Standard",
-      price: product.price,
-      quantity: 1,
-      image: product.image,
-    });
-    alert(`${product.name} added to cart!`);
-  };
+  const filteredProducts = selectedCategory === "all"
+    ? products
+    : products.filter((p) => p.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-neutral-200">
+      {/* Catalog Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 pb-6 border-b border-neutral-200">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tight">Men's Catalog</h1>
-          <p className="text-sm text-neutral-500 mt-1">Explore our latest drops and essential menswear.</p>
+          <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">STRTKIN.in Storefront</span>
+          <h1 className="text-3xl font-black uppercase tracking-tight mt-1">Complete Apparel Collection</h1>
         </div>
 
         {/* Category Filters */}
@@ -80,10 +89,10 @@ function ShopContent() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`text-xs uppercase tracking-wider px-4 py-2 font-semibold transition border ${
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
                 selectedCategory === cat
                   ? "bg-black text-white border-black"
-                  : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
+                  : "bg-white text-neutral-600 border-neutral-300 hover:border-black"
               }`}
             >
               {cat}
@@ -93,47 +102,36 @@ function ShopContent() {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
-          <div key={product.id} className="group relative flex flex-col justify-between space-y-3">
-            <Link href={`/shop/${product.id}`} className="block space-y-3">
-              <div className="aspect-[4/5] bg-neutral-100 relative overflow-hidden">
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-20 text-neutral-500 uppercase tracking-widest text-sm">
+          No products found in this category.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {filteredProducts.map((product) => (
+            <Link key={product.id} href={`/shop/${product.id}`} className="group block">
+              <div className="aspect-[4/5] bg-neutral-100 overflow-hidden relative mb-4 border border-neutral-200">
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                 />
-                <span className="absolute top-2 left-2 bg-black text-white text-[10px] uppercase px-2 py-1 tracking-widest font-bold">
-                  New
+                <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1">
+                  Save 40%
                 </span>
               </div>
-              <div>
-                <h3 className="font-bold text-sm text-neutral-900 group-hover:underline">{product.name}</h3>
-                <div className="flex items-center gap-2 mt-1">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400">{product.category}</span>
+                <h3 className="font-bold text-sm text-neutral-900 group-hover:underline truncate">{product.name}</h3>
+                <div className="flex items-center gap-3 pt-1">
                   <span className="font-bold text-sm">₹{product.price}</span>
                   <span className="text-xs text-neutral-400 line-through">₹{product.originalPrice}</span>
                 </div>
               </div>
             </Link>
-
-            {/* Quick Add Button */}
-            <button
-              onClick={(e) => handleQuickAdd(product, e)}
-              className="w-full bg-black text-white text-xs uppercase tracking-widest py-2.5 font-bold hover:bg-neutral-800 transition flex items-center justify-center gap-2"
-            >
-              <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-
-export default function ShopPage() {
-  return (
-    <Suspense fallback={<div className="py-20 text-center text-sm uppercase tracking-widest">Loading Catalog...</div>}>
-      <ShopContent />
-    </Suspense>
-  );
-} 
