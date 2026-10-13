@@ -28,13 +28,48 @@ export default function CheckoutPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (cartItems.length === 0) return;
+
     setIsSubmitting(true);
 
-    // Simulate order placement
+    // Format new order object
+    const newOrder = {
+      id: `STRK-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: new Date().toLocaleString("en-IN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
+      customer: {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+      },
+      items: cartItems
+        .map((item) => `${item.name} (${item.size}) x ${item.quantity}`)
+        .join(", "),
+      total: subtotal,
+      status: "PENDING VERIFICATION",
+    };
+
+    // Retrieve existing orders and prepend new order
+    try {
+      const existingOrders = JSON.parse(localStorage.getItem("strtkin_orders") || "[]");
+      const updatedOrders = [newOrder, ...existingOrders];
+      localStorage.setItem("strtkin_orders", JSON.stringify(updatedOrders));
+    } catch (e) {
+      console.error("Failed to save order to localStorage", e);
+    }
+
+    // Simulate network delay, clear cart, and redirect
     setTimeout(() => {
       clearCart();
       router.push("/checkout/success");
-    }, 1500);
+    }, 1200);
   };
 
   return (
@@ -47,7 +82,7 @@ export default function CheckoutPage() {
         {/* Shipping Form */}
         <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
           <h2 className="text-lg font-bold tracking-tight">Shipping Information</h2>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1">Full Name</label>
