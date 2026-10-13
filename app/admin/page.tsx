@@ -24,7 +24,7 @@ export default function AdminDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
 
-  // Products State (Starts empty, fully dynamic)
+  // Products State
   const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
@@ -36,12 +36,11 @@ export default function AdminDashboardPage() {
     originalPrice: "",
     description: "",
     sizes: "S, M, L, XL",
-    image: "",
+    images: [] as string[],
   });
 
   // Load Orders & Products from LocalStorage
   useEffect(() => {
-    // Orders
     const savedOrders = localStorage.getItem("strtkin_orders");
     if (savedOrders) {
       try {
@@ -51,7 +50,6 @@ export default function AdminDashboardPage() {
       }
     }
 
-    // Products
     const savedProducts = localStorage.getItem("strtkin_products");
     if (savedProducts) {
       try {
@@ -96,13 +94,14 @@ export default function AdminDashboardPage() {
       originalPrice: "",
       description: "",
       sizes: "S, M, L, XL",
-      image: "",
+      images: [],
     });
     setIsModalOpen(true);
   };
 
   const openEditModal = (product: any) => {
     setEditingProduct(product);
+    const imgs = product.images || (product.image ? [product.image] : []);
     setFormData({
       name: product.name,
       category: product.category,
@@ -110,21 +109,33 @@ export default function AdminDashboardPage() {
       originalPrice: String(product.originalPrice || ""),
       description: product.description || "",
       sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes,
-      image: product.image,
+      images: imgs,
     });
     setIsModalOpen(true);
   };
 
-  // Handle local file upload from computer using FileReader
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+  // Handle multiple local computer file selections
+  const handleMultipleImageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, reader.result as string],
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const removeImage = (indexToRemove: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, idx) => idx !== indexToRemove),
+    }));
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -136,6 +147,8 @@ export default function AdminDashboardPage() {
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const primaryImage = formData.images[0] || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60";
+
     const formattedProduct = {
       id: editingProduct ? editingProduct.id : String(Date.now()),
       name: formData.name,
@@ -144,7 +157,8 @@ export default function AdminDashboardPage() {
       originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.5,
       description: formData.description,
       sizes: formData.sizes.split(",").map((s) => s.trim()),
-      image: formData.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
+      images: formData.images,
+      image: primaryImage,
     };
 
     let updatedProducts;
@@ -214,7 +228,6 @@ export default function AdminDashboardPage() {
         {/* TAB 1: ORDERS MANAGEMENT */}
         {activeAdminTab === "ORDERS" && (
           <div className="space-y-6">
-            {/* Filter Buttons */}
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setOrderFilter("ALL")}
@@ -248,7 +261,6 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
-            {/* Orders List */}
             {filteredOrders.length === 0 ? (
               <div className="border border-neutral-800 bg-neutral-900/40 p-16 text-center space-y-3">
                 <PackageCheck className="w-10 h-10 text-neutral-600 mx-auto" />
@@ -379,7 +391,7 @@ export default function AdminDashboardPage() {
                   >
                     <div className="aspect-[4/3] bg-neutral-950 overflow-hidden relative border border-neutral-800">
                       <img
-                        src={product.image}
+                        src={product.image || product.images?.[0]}
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />
@@ -421,7 +433,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* EDIT / ADD PRODUCT MODAL WITH COMPUTER FILE UPLOAD */}
+        {/* EDIT / ADD PRODUCT MODAL WITH MULTIPLE IMAGES UPLOAD */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
@@ -483,28 +495,43 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* COMPUTER FILE UPLOAD */}
+                {/* MULTIPLE IMAGES COMPUTER UPLOAD */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Upload Product Image from Computer
+                    Upload Multiple Product Images from Computer
                   </label>
                   <div className="flex items-center gap-3 bg-neutral-950 border border-neutral-800 p-3">
                     <label className="cursor-pointer bg-neutral-800 hover:bg-[#FF5500] text-white text-xs uppercase font-bold px-4 py-2 transition flex items-center gap-2">
-                      <Upload className="w-3.5 h-3.5" /> Choose File
+                      <Upload className="w-3.5 h-3.5" /> Choose Files
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageFileChange}
+                        multiple
+                        onChange={handleMultipleImageFilesChange}
                         className="hidden"
                       />
                     </label>
                     <span className="text-xs text-neutral-400 truncate">
-                      {formData.image ? "Image loaded successfully ✓" : "No file chosen"}
+                      {formData.images.length > 0 ? `${formData.images.length} images loaded ✓` : "No files chosen"}
                     </span>
                   </div>
-                  {formData.image && (
-                    <div className="mt-2 w-20 h-20 border border-neutral-800 relative overflow-hidden">
-                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+
+                  {/* Thumbnails Preview Grid */}
+                  {formData.images.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mt-3">
+                      {formData.images.map((imgSrc, idx) => (
+                        <div key={idx} className="relative w-full h-20 border border-neutral-800 overflow-hidden group">
+                          <img src={imgSrc} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-80 hover:opacity-100 transition"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
