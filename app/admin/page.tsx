@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Package, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Package, ShoppingBag, LogOut } from "lucide-react";
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"orders" | "products">("orders");
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -19,6 +21,13 @@ export default function AdminPage() {
 
   const loadData = () => {
     if (typeof window === "undefined") return;
+
+    // Check if authenticated
+    const auth = localStorage.getItem("strtkin_admin_auth");
+    if (!auth || auth !== "true") {
+      router.push("/admin/login");
+      return;
+    }
 
     const storedProds = localStorage.getItem("strtkin_products");
     if (storedProds) {
@@ -64,6 +73,11 @@ export default function AdminPage() {
       window.removeEventListener("storage", handleUpdate);
     };
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("strtkin_admin_auth");
+    router.push("/admin/login");
+  };
 
   if (!mounted) {
     return (
@@ -140,24 +154,34 @@ export default function AdminPage() {
             </h1>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 bg-neutral-950 p-1 border border-neutral-800">
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                activeTab === "orders" ? "bg-[#FF5500] text-white" : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              <ShoppingBag className="w-3.5 h-3.5" /> ORDERS ({orders.length})
-            </button>
+          {/* Navigation & Logout */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-neutral-950 p-1 border border-neutral-800">
+              <button
+                onClick={() => setActiveTab("orders")}
+                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                  activeTab === "orders" ? "bg-[#FF5500] text-white" : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                <ShoppingBag className="w-3.5 h-3.5" /> ORDERS ({orders.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab("products")}
+                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                  activeTab === "products" ? "bg-[#FF5500] text-white" : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                <Package className="w-3.5 h-3.5" /> PRODUCTS ({products.length})
+              </button>
+            </div>
 
             <button
-              onClick={() => setActiveTab("products")}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                activeTab === "products" ? "bg-[#FF5500] text-white" : "text-neutral-400 hover:text-white"
-              }`}
+              onClick={handleLogout}
+              title="Sign Out"
+              className="bg-neutral-950 border border-neutral-800 p-3 text-neutral-400 hover:text-red-500 transition"
             >
-              <Package className="w-3.5 h-3.5" /> PRODUCTS ({products.length})
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
