@@ -54,11 +54,11 @@ function ShopContent() {
       : ALL_PRODUCTS.filter((p) => p.category === selectedCategory);
 
   const handleQuickAdd = (product: any, e: React.MouseEvent) => {
-    e.preventDefault(); // Prevents navigating to the product page when clicking the button
+    e.preventDefault();
     addToCart({
       id: product.id,
       name: product.name,
-      size: "L", // default size
+      size: "L",
       color: "Standard",
       price: product.price,
       quantity: 1,
@@ -137,4 +137,4 @@ export default function ShopPage() {
       <ShopContent />
     </Suspense>
   );
-}
+} 
