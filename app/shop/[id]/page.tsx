@@ -18,7 +18,6 @@ function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: 
     const products = getStoredProducts();
     let found = products.find((p: any) => String(p.id) === String(productId));
 
-    // Fallback if navigating to /shop/1 or an old missing ID
     if (!found && products.length > 0) {
       found = products[0];
     }
@@ -96,7 +95,6 @@ function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: 
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Left: Product Images */}
           <div className="space-y-4">
             <div className="aspect-[4/5] bg-neutral-950 border border-neutral-800 overflow-hidden relative">
               <img
@@ -128,7 +126,6 @@ function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: 
             )}
           </div>
 
-          {/* Right: Details & Add to Bag */}
           <div className="space-y-6 flex flex-col justify-between">
             <div className="space-y-5">
               <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-3 py-1 inline-block">
@@ -158,7 +155,6 @@ function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: 
                 </p>
               </div>
 
-              {/* Sizes Selection */}
               {product.sizes && product.sizes.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <label className="block text-xs font-black uppercase tracking-widest text-neutral-300">
@@ -182,7 +178,6 @@ function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: 
                 </div>
               )}
 
-              {/* Add to Bag Action */}
               <div className="pt-4">
                 <button
                   onClick={handleAddToCart}
@@ -203,7 +198,6 @@ function ProductDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: 
               </div>
             </div>
 
-            {/* Service Guarantees */}
             <div className="border-t border-neutral-800 pt-6 space-y-3">
               <div className="flex items-center gap-3 text-xs text-neutral-400 font-bold">
                 <Truck className="w-4 h-4 text-[#FF5500]" /> Express Cash on Delivery Nationwide
