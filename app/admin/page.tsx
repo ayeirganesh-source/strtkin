@@ -1,258 +1,376 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Package, ShoppingBag, LogOut } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Phone,
+  Trash2,
+  PackageCheck,
+  Plus,
+  Edit,
+  ShoppingBag,
+  Package,
+  X,
+} from "lucide-react";
 
-export default function AdminPage() {
-  const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"orders" | "products">("orders");
-  const [products, setProducts] = useState<any[]>([]);
+const DEFAULT_PRODUCTS = [
+  {
+    id: "1",
+    name: "Oversized Heavyweight Black Tee",
+    category: "t-shirts",
+    price: 799,
+    originalPrice: 1299,
+    description: "Premium 240 GSM 100% combed cotton oversized t-shirt.",
+    sizes: ["S", "M", "L", "XL"],
+    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
+  },
+  {
+    id: "2",
+    name: "Classic Oxford White Button-Down",
+    category: "shirts",
+    price: 1499,
+    originalPrice: 2499,
+    description: "Tailored Oxford woven cotton shirt.",
+    sizes: ["S", "M", "L", "XL"],
+    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=60",
+  },
+  {
+    id: "3",
+    name: "Slim Fit Raw Indigo Denim Jeans",
+    category: "jeans",
+    price: 1999,
+    originalPrice: 3499,
+    description: "Heavy-duty 14oz raw stretch denim.",
+    sizes: ["30", "32", "34", "36"],
+    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&auto=format&fit=crop&q=60",
+  },
+  {
+    id: "4",
+    name: "Minimalist Black Hoodie",
+    category: "hoodies",
+    price: 2199,
+    originalPrice: 3799,
+    description: "Ultra-soft fleece-lined hoodie.",
+    sizes: ["S", "M", "L", "XL"],
+    image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=60",
+  },
+];
+
+export default function AdminDashboardPage() {
+  const [activeAdminTab, setActiveAdminTab] = useState<"ORDERS" | "PRODUCTS">("ORDERS");
+
+  // Orders State
   const [orders, setOrders] = useState<any[]>([]);
-  const router = useRouter();
+  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-  const [category, setCategory] = useState("TEES");
-  const [description, setDescription] = useState("");
-  const [images, setImages] = useState("");
+  // Products State
+  const [products, setProducts] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
-  const loadData = () => {
-    if (typeof window === "undefined") return;
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "t-shirts",
+    price: "",
+    originalPrice: "",
+    description: "",
+    sizes: "S, M, L, XL",
+    image: "",
+  });
 
-    // Check if authenticated
-    const auth = localStorage.getItem("strtkin_admin_auth");
-    if (!auth || auth !== "true") {
-      router.push("/admin/login");
-      return;
-    }
-
-    const storedProds = localStorage.getItem("strtkin_products");
-    if (storedProds) {
+  // Load Orders & Products from LocalStorage
+  useEffect(() => {
+    // Orders
+    const savedOrders = localStorage.getItem("strtkin_orders");
+    if (savedOrders) {
       try {
-        setProducts(JSON.parse(storedProds));
+        setOrders(JSON.parse(savedOrders));
       } catch (e) {
-        setProducts([]);
+        console.error("Failed to parse orders", e);
       }
     }
 
-    const storedOrders = localStorage.getItem("strtkin_orders");
-    if (storedOrders) {
+    // Products
+    const savedProducts = localStorage.getItem("strtkin_products");
+    if (savedProducts) {
       try {
-        setOrders(JSON.parse(storedOrders));
+        setProducts(JSON.parse(savedProducts));
       } catch (e) {
-        setOrders([]);
+        console.error("Failed to parse products", e);
+        setProducts(DEFAULT_PRODUCTS);
       }
     } else {
-      setOrders([
-        {
-          id: "ORD-1001",
-          customer: "Arjun Verma",
-          phone: "+91 98765 43210",
-          address: "Bandra West, Mumbai, MH",
-          items: [{ name: '"Madness" Oversized Tee', size: "L", quantity: 1, price: 799 }],
-          total: 799,
-          status: "PROCESSING",
-        },
-      ]);
+      setProducts(DEFAULT_PRODUCTS);
+      localStorage.setItem("strtkin_products", JSON.stringify(DEFAULT_PRODUCTS));
     }
-  };
-
-  useEffect(() => {
-    setMounted(true);
-    loadData();
-
-    const handleUpdate = () => loadData();
-    window.addEventListener("strtkin_products_updated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
-
-    return () => {
-      window.removeEventListener("strtkin_products_updated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
-    };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("strtkin_admin_auth");
-    router.push("/admin/login");
+  // Order Operations
+  const updateOrderStatus = (id: string, newStatus: string) => {
+    const updated = orders.map((order) =>
+      order.id === id ? { ...order, status: newStatus } : order
+    );
+    setOrders(updated);
+    localStorage.setItem("strtkin_orders", JSON.stringify(updated));
   };
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
-          LOADING ADMIN CONTROL CENTER...
-        </p>
-      </div>
-    );
-  }
+  const handleDeleteOrder = (id: string) => {
+    const updated = orders.filter((order) => order.id !== id);
+    setOrders(updated);
+    localStorage.setItem("strtkin_orders", JSON.stringify(updated));
+  };
 
-  const handleAddProduct = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !price) return;
+  const filteredOrders = orders.filter((order) => {
+    if (orderFilter === "PENDING") return order.status !== "CONFIRMED & FORWARDED" && order.status !== "CONFIRMED";
+    if (orderFilter === "CONFIRMED") return order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED";
+    return true;
+  });
 
-    const imgArray = images
-      ? images.split(",").map((s) => s.trim())
-      : ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60"];
+  // Product Operations
+  const openCreateModal = () => {
+    setEditingProduct(null);
+    setFormData({
+      name: "",
+      category: "t-shirts",
+      price: "",
+      originalPrice: "",
+      description: "",
+      sizes: "S, M, L, XL",
+      image: "",
+    });
+    setIsModalOpen(true);
+  };
 
-    const newProduct = {
-      id: String(Date.now()),
-      name,
-      price: Number(price),
-      originalPrice: originalPrice ? Number(originalPrice) : undefined,
-      category,
-      description: description || "Heavyweight drop-shoulder street silhouette cut for maximum comfort.",
-      image: imgArray[0],
-      images: imgArray,
-      sizes: ["S", "M", "L", "XL"],
-    };
-
-    const updated = [newProduct, ...products];
-    setProducts(updated);
-    localStorage.setItem("strtkin_products", JSON.stringify(updated));
-    window.dispatchEvent(new Event("strtkin_products_updated"));
-
-    setName("");
-    setPrice("");
-    setOriginalPrice("");
-    setDescription("");
-    setImages("");
+  const openEditModal = (product: any) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      category: product.category,
+      price: String(product.price),
+      originalPrice: String(product.originalPrice || ""),
+      description: product.description || "",
+      sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes,
+      image: product.image,
+    });
+    setIsModalOpen(true);
   };
 
   const handleDeleteProduct = (id: string) => {
-    const updated = products.filter((p) => String(p.id) !== String(id));
+    const updated = products.filter((p) => p.id !== id);
     setProducts(updated);
     localStorage.setItem("strtkin_products", JSON.stringify(updated));
-    window.dispatchEvent(new Event("strtkin_products_updated"));
   };
 
-  const totalRevenue = orders.reduce((sum, ord) => sum + Number(ord.total || 0), 0);
+  const handleSaveProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const formattedProduct = {
+      id: editingProduct ? editingProduct.id : String(Date.now()),
+      name: formData.name,
+      category: formData.category.toLowerCase(),
+      price: Number(formData.price),
+      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.5,
+      description: formData.description,
+      sizes: formData.sizes.split(",").map((s) => s.trim()),
+      image: formData.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
+    };
+
+    let updatedProducts;
+    if (editingProduct) {
+      updatedProducts = products.map((p) => (p.id === editingProduct.id ? formattedProduct : p));
+    } else {
+      updatedProducts = [formattedProduct, ...products];
+    }
+
+    setProducts(updatedProducts);
+    localStorage.setItem("strtkin_products", JSON.stringify(updatedProducts));
+    setIsModalOpen(false);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+    <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         
-        {/* Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-neutral-800 pb-6 gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
+        {/* Navigation Top Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-neutral-800 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
               <Link
                 href="/shop"
-                className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-[#FF5500] transition flex items-center gap-1"
+                className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-[#FF5500] flex items-center gap-1.5 transition"
               >
-                <ArrowLeft className="w-3.5 h-3.5" /> BACK TO STOREFRONT
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Storefront
               </Link>
-              <span className="text-neutral-600">/</span>
-              <span className="text-xs font-black uppercase tracking-widest text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/20 px-2 py-0.5">
-                ADMIN CONTROL ROOM
+              <span className="text-neutral-700">/</span>
+              <span className="text-[10px] font-black uppercase tracking-widest bg-[#FF5500] text-white px-2 py-0.5">
+                Admin Control Room
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white">
-              STRTKIN CONTROL CENTER
+            <h1 className="text-4xl font-black uppercase tracking-tight text-white">
+              STRTKIN Control Center
             </h1>
+            <p className="text-xs text-neutral-400 mt-1">
+              Manage live customer orders, verify Cash on Delivery, and edit product catalog items.
+            </p>
           </div>
 
-          {/* Navigation & Logout */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-neutral-950 p-1 border border-neutral-800">
-              <button
-                onClick={() => setActiveTab("orders")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                  activeTab === "orders" ? "bg-[#FF5500] text-white" : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                <ShoppingBag className="w-3.5 h-3.5" /> ORDERS ({orders.length})
-              </button>
-
-              <button
-                onClick={() => setActiveTab("products")}
-                className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
-                  activeTab === "products" ? "bg-[#FF5500] text-white" : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                <Package className="w-3.5 h-3.5" /> PRODUCTS ({products.length})
-              </button>
-            </div>
-
+          {/* Tab Switcher */}
+          <div className="flex bg-neutral-900 border border-neutral-800 p-1">
             <button
-              onClick={handleLogout}
-              title="Sign Out"
-              className="bg-neutral-950 border border-neutral-800 p-3 text-neutral-400 hover:text-red-500 transition"
+              onClick={() => setActiveAdminTab("ORDERS")}
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                activeAdminTab === "ORDERS"
+                  ? "bg-[#FF5500] text-white shadow-lg"
+                  : "text-neutral-400 hover:text-white"
+              }`}
             >
-              <LogOut className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4" /> Orders ({orders.length})
+            </button>
+            <button
+              onClick={() => setActiveAdminTab("PRODUCTS")}
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+                activeAdminTab === "PRODUCTS"
+                  ? "bg-[#FF5500] text-white shadow-lg"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              <Package className="w-4 h-4" /> Products ({products.length})
             </button>
           </div>
         </div>
 
-        {/* ORDERS TAB */}
-        {activeTab === "orders" && (
+        {/* TAB 1: ORDERS MANAGEMENT */}
+        {activeAdminTab === "ORDERS" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
-                  TOTAL ORDERS RECEIVED
-                </span>
-                <p className="text-3xl font-black text-white">{orders.length}</p>
-              </div>
-              <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
-                  ESTIMATED REVENUE
-                </span>
-                <p className="text-3xl font-black text-[#FF5500]">₹{totalRevenue}</p>
-              </div>
-              <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
-                  FULFILLMENT STATUS
-                </span>
-                <p className="text-3xl font-black text-emerald-500">100% ACTIVE</p>
-              </div>
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setOrderFilter("ALL")}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
+                  orderFilter === "ALL"
+                    ? "bg-white text-black border-white"
+                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }`}
+              >
+                All Orders ({orders.length})
+              </button>
+              <button
+                onClick={() => setOrderFilter("PENDING")}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
+                  orderFilter === "PENDING"
+                    ? "bg-white text-black border-white"
+                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }`}
+              >
+                Pending Verification
+              </button>
+              <button
+                onClick={() => setOrderFilter("CONFIRMED")}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
+                  orderFilter === "CONFIRMED"
+                    ? "bg-white text-black border-white"
+                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }`}
+              >
+                Confirmed & Forwarded
+              </button>
             </div>
 
-            {orders.length === 0 ? (
-              <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
+            {/* Orders List */}
+            {filteredOrders.length === 0 ? (
+              <div className="border border-neutral-800 bg-neutral-900/40 p-16 text-center space-y-3">
+                <PackageCheck className="w-10 h-10 text-neutral-600 mx-auto" />
                 <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
-                  No customer orders received yet.
+                  No Customer Orders Found
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {orders.map((ord, idx) => (
-                  <div key={ord.id || idx} className="border border-neutral-800 bg-neutral-950 p-6 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-900 gap-2">
-                      <div>
-                        <span className="text-xs font-black text-[#FF5500] uppercase tracking-widest">
-                          {ord.id || `ORD-${1000 + idx}`}
+                {filteredOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="border border-neutral-800 bg-neutral-900/60 p-6 space-y-4 hover:border-neutral-700 transition"
+                  >
+                    <div className="flex flex-wrap justify-between items-center gap-4 pb-4 border-b border-neutral-800">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-black uppercase tracking-tight text-white">
+                          {order.id}
                         </span>
-                        <h3 className="text-base font-bold text-white mt-0.5">{ord.customer}</h3>
-                        <p className="text-xs text-neutral-400">
-                          {ord.phone} • {ord.address}
-                        </p>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest ${
+                            order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED"
+                              ? "bg-green-500/10 text-green-400 border border-green-500/30"
+                              : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                          }`}
+                        >
+                          {order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED" ? (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          ) : (
+                            <Clock className="w-3.5 h-3.5" />
+                          )}
+                          {order.status}
+                        </span>
                       </div>
-                      <div className="text-left sm:text-right">
-                        <span className="text-lg font-black text-white">₹{ord.total}</span>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
-                          {ord.status || "PROCESSING (COD)"}
-                        </p>
+                      <span className="text-xs text-neutral-500">{order.date}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block mb-1">
+                          Customer Info
+                        </span>
+                        <span className="font-bold block text-neutral-200">{order.customer?.name}</span>
+                        <span className="text-xs font-semibold text-[#FF5500]">{order.customer?.phone}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block mb-1">
+                          Delivery Address
+                        </span>
+                        <span className="text-xs text-neutral-400 leading-relaxed block">
+                          {order.customer?.address}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
-                        ITEMS ORDERED:
-                      </span>
-                      <div className="flex flex-wrap gap-3">
-                        {ord.items &&
-                          ord.items.map((item: any, itemIdx: number) => (
-                            <div
-                              key={itemIdx}
-                              className="bg-neutral-900 border border-neutral-800 px-3 py-2 text-xs font-bold text-neutral-300"
-                            >
-                              {item.name} ({item.size || "M"}) × {item.quantity || 1} — ₹{item.price}
-                            </div>
-                          ))}
+                    <div className="flex flex-wrap justify-between items-center pt-3 border-t border-neutral-800/80 gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block mb-0.5">
+                          Items
+                        </span>
+                        <span className="text-xs font-medium text-neutral-300">{order.items}</span>
                       </div>
+                      <div className="text-right">
+                        <span className="text-xs text-neutral-400">Total: </span>
+                        <span className="text-lg font-black text-white">₹{order.total}</span>
+                        <span className="text-[10px] text-neutral-500 block">(COD)</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      {order.status !== "CONFIRMED & FORWARDED" && order.status !== "CONFIRMED" && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, "CONFIRMED & FORWARDED")}
+                          className="bg-[#FF5500] text-white text-xs uppercase tracking-widest px-5 py-2.5 font-extrabold hover:bg-[#e04b00] transition flex items-center gap-2"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Confirm Order
+                        </button>
+                      )}
+                      <a
+                        href={`tel:${order.customer?.phone}`}
+                        className="border border-neutral-700 text-neutral-300 text-xs uppercase tracking-widest px-5 py-2.5 font-bold hover:bg-neutral-800 transition flex items-center gap-2"
+                      >
+                        <Phone className="w-3.5 h-3.5" /> Call Customer
+                      </a>
+                      <button
+                        onClick={() => handleDeleteOrder(order.id)}
+                        className="p-2.5 text-neutral-500 hover:text-red-500 transition ml-auto"
+                        title="Delete Order"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -261,154 +379,180 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* PRODUCTS TAB */}
-        {activeTab === "products" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="border border-neutral-800 bg-neutral-950 p-6 space-y-5">
-              <div className="border-b border-neutral-800 pb-3">
-                <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
-                  ADD NEW APPAREL
-                </span>
-                <h3 className="text-lg font-black uppercase tracking-tight text-white mt-0.5">
-                  CREATE PRODUCT DROP
-                </h3>
-              </div>
+        {/* TAB 2: PRODUCT MANAGEMENT */}
+        {activeAdminTab === "PRODUCTS" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-bold uppercase tracking-wider text-neutral-300">
+                Live Store Catalog ({products.length} Items)
+              </h2>
+              <button
+                onClick={openCreateModal}
+                className="bg-[#FF5500] text-white text-xs uppercase tracking-widest px-6 py-3 font-black hover:bg-[#e04b00] transition flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Add New Product
+              </button>
+            </div>
 
-              <form onSubmit={handleAddProduct} className="space-y-4 text-xs font-bold uppercase tracking-widest">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="border border-neutral-800 bg-neutral-900/60 p-4 space-y-4 hover:border-neutral-700 transition"
+                >
+                  <div className="aspect-[4/3] bg-neutral-950 overflow-hidden relative border border-neutral-800">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-neutral-800">
+                      {product.category}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-sm text-white truncate">{product.name}</h3>
+                    <p className="text-xs text-neutral-400 line-clamp-2">{product.description}</p>
+                    <div className="flex items-center gap-3 pt-2">
+                      <span className="font-black text-white">₹{product.price}</span>
+                      {product.originalPrice && (
+                        <span className="text-xs text-neutral-500 line-through">₹{product.originalPrice}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-neutral-800">
+                    <button
+                      onClick={() => openEditModal(product)}
+                      className="flex-1 bg-neutral-800 text-white text-xs uppercase tracking-wider py-2 font-bold hover:bg-white hover:text-black transition flex items-center justify-center gap-1.5"
+                    >
+                      <Edit className="w-3.5 h-3.5" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="p-2 border border-neutral-800 text-neutral-400 hover:text-red-500 hover:border-red-500 transition"
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* EDIT / ADD PRODUCT MODAL */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 text-neutral-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h2 className="text-xl font-black uppercase tracking-tight">
+                {editingProduct ? "Edit Product" : "Add New Product"}
+              </h2>
+
+              <form onSubmit={handleSaveProduct} className="space-y-4">
                 <div>
-                  <label className="block text-neutral-400 mb-1">Product Title</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                    Product Title
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder='e.g., "MADNESS" OVERSIZED TEE'
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    placeholder="e.g. Heavyweight Boxy Tee"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-neutral-400 mb-1">Price (₹)</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    >
+                      <option value="t-shirts">Tees</option>
+                      <option value="shirts">Shirts</option>
+                      <option value="jeans">Jeans</option>
+                      <option value="hoodies">Hoodies</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                      Price (₹)
+                    </label>
                     <input
                       type="number"
                       required
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
                       placeholder="799"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-neutral-400 mb-1">Original Price (₹)</label>
-                    <input
-                      type="number"
-                      placeholder="1299"
-                      value={originalPrice}
-                      onChange={(e) => setOriginalPrice(e.target.value)}
-                      className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-neutral-400 mb-1">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none"
-                  >
-                    <option value="TEES">TEES</option>
-                    <option value="SHIRTS">SHIRTS</option>
-                    <option value="JEANS">JEANS</option>
-                    <option value="HOODIES">HOODIES</option>
-                    <option value="OUTERWEAR">OUTERWEAR</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-neutral-400 mb-1">Image URLs (Comma-separated)</label>
-                  <textarea
-                    rows={2}
-                    placeholder="https://image1.jpg, https://image2.jpg"
-                    value={images}
-                    onChange={(e) => setImages(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none resize-none"
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    placeholder="https://images.unsplash.com/..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-neutral-400 mb-1">Description</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                    Sizes (Comma Separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sizes}
+                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    placeholder="S, M, L, XL"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+                    Description
+                  </label>
                   <textarea
                     rows={3}
-                    placeholder="Heavyweight combed cotton street silhouette..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full bg-black border border-neutral-800 px-4 py-3 text-white focus:border-[#FF5500] outline-none resize-none"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
+                    placeholder="Short product description..."
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#FF5500] text-white py-4 font-black hover:bg-[#e04b00] transition flex items-center justify-center gap-2"
+                  className="w-full bg-[#FF5500] text-white text-xs uppercase tracking-widest py-4 font-black hover:bg-[#e04b00] transition"
                 >
-                  <Plus className="w-4 h-4" /> PUBLISH TO STOREFRONT
+                  {editingProduct ? "Save Changes" : "Publish Product"}
                 </button>
               </form>
             </div>
-
-            <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-2">
-                ACTIVE STORE PRODUCTS ({products.length})
-              </h3>
-
-              {products.length === 0 ? (
-                <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
-                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
-                    No products added yet. Use the form on the left.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {products.map((p) => {
-                    const img =
-                      p.images && p.images.length > 0
-                        ? p.images[0]
-                        : p.image || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60";
-
-                    return (
-                      <div
-                        key={p.id}
-                        className="border border-neutral-800 bg-neutral-950 p-4 flex gap-4 items-center justify-between"
-                      >
-                        <div className="flex gap-3 items-center">
-                          <img
-                            src={img}
-                            alt={p.name}
-                            className="w-16 h-20 object-cover bg-neutral-900 border border-neutral-800"
-                          />
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase text-[#FF5500]">
-                              {p.category || "STREETWEAR"}
-                            </span>
-                            <h4 className="font-bold text-xs text-white line-clamp-1">{p.name}</h4>
-                            <p className="text-xs font-black text-white">₹{p.price}</p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="text-neutral-500 hover:text-red-500 transition p-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
           </div>
         )}
 
