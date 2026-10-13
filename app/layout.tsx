@@ -21,12 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-white text-black antialiased`}>
         <CartProvider>
-          {/* Announcement Bar */}
-          <div className="bg-black text-white text-xs py-2 text-center tracking-widest uppercase">
-            Cash on Delivery Available Across India • Free Shipping on Orders Over ₹999
-          </div>
-
-          {/* Dynamic Header */}
+          {/* Dynamic Header (Includes top announcement banner) */}
           <Header />
 
           {/* Main Content */}

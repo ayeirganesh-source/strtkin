@@ -8,21 +8,9 @@ export default function Header() {
 
   return (
     <>
-      {/* Top Black Announcement Ticker */}
-      <div className="bg-black text-white border-b border-neutral-800 text-[10px] font-bold tracking-widest uppercase py-2 overflow-hidden whitespace-nowrap">
-        <div className="inline-flex gap-8 animate-marquee items-center text-neutral-300">
-          <span>FREE SHIPPING ACROSS INDIA OVER ₹1,999</span>
-          <span className="text-[#FF5500]">■</span>
-          <span className="text-white">DROP 04 — CONCRETE SEASON — OUT NOW</span>
-          <span className="text-[#FF5500]">■</span>
-          <span>7-DAY EASY EXCHANGES</span>
-          <span className="text-[#FF5500]">■</span>
-          <span>MADE IN INDIA</span>
-          <span className="text-[#FF5500]">■</span>
-          <span>FREE SHIPPING ACROSS INDIA OVER ₹1,999</span>
-          <span className="text-[#FF5500]">■</span>
-          <span className="text-white">DROP 04 — CONCRETE SEASON — OUT NOW</span>
-        </div>
+      {/* Single Clean Top Black Banner */}
+      <div className="bg-black text-white text-[11px] font-bold tracking-widest uppercase py-2.5 text-center border-b border-neutral-800">
+        CASH ON DELIVERY AVAILABLE ACROSS INDIA • FREE SHIPPING ON ORDERS OVER ₹1,999
       </div>
 
       {/* Main Navigation Header */}
