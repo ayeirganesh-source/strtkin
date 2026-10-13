@@ -1,6 +1,33 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Truck, RefreshCw } from "lucide-react";
 
+const CATEGORIES = [
+  {
+    name: "T-Shirts",
+    slug: "t-shirts",
+    image:
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    name: "Shirts",
+    slug: "shirts",
+    image:
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    name: "Jeans",
+    slug: "jeans",
+    image:
+      "https://images.unsplash.com/photo-1542272604-780c36856842?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    name: "Hoodies & Jackets",
+    slug: "hoodies-and-jackets",
+    image:
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80",
+  },
+];
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -59,7 +86,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="flex justify-between items-end mb-10">
           <div>
-            <h2 className="text-2xl md:3xl font-bold tracking-tight">Shop By Category</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Shop By Category</h2>
             <p className="text-sm text-neutral-500 mt-1">Explore our essential menswear lineup.</p>
           </div>
           <Link href="/shop" className="text-sm font-semibold underline underline-offset-4 hover:text-neutral-600">
@@ -68,16 +95,26 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {["T-Shirts", "Shirts", "Jeans", "Hoodies & Jackets"].map((cat, idx) => (
+          {CATEGORIES.map((cat, idx) => (
             <Link
               key={idx}
-              href={`/shop?category=${cat.toLowerCase()}`}
-              className="group relative bg-neutral-100 aspect-[4/5] flex items-end p-6 overflow-hidden rounded-sm"
+              href={`/shop?category=${cat.slug}`}
+              className="group relative bg-neutral-900 aspect-[4/5] flex items-end p-6 overflow-hidden rounded-sm"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent group-hover:scale-105 transition duration-500 bg-neutral-200"></div>
+              {/* Background Image with Hover Zoom */}
+              <img
+                src={cat.image}
+                alt={cat.name}
+                className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 group-hover:opacity-90 transition-all duration-500"
+              />
+
+              {/* Gradient Overlay for Readable Text */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+              {/* Category Label */}
               <div className="relative z-10 text-white">
-                <h3 className="font-bold text-lg tracking-wide">{cat}</h3>
-                <span className="text-xs text-neutral-300 flex items-center gap-1 mt-1">
+                <h3 className="font-bold text-lg tracking-wide">{cat.name}</h3>
+                <span className="text-xs text-neutral-300 flex items-center gap-1 mt-1 group-hover:translate-x-1 transition-transform">
                   Explore <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
