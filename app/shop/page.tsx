@@ -3,6 +3,8 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
+import { ShoppingBag } from "lucide-react";
 
 const ALL_PRODUCTS = [
   {
@@ -42,6 +44,7 @@ const ALL_PRODUCTS = [
 function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
+  const { addToCart } = useCart();
 
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || "all");
 
@@ -49,6 +52,20 @@ function ShopContent() {
     selectedCategory === "all" || !selectedCategory
       ? ALL_PRODUCTS
       : ALL_PRODUCTS.filter((p) => p.category === selectedCategory);
+
+  const handleQuickAdd = (product: any, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevents navigating to the product page when clicking the button
+    addToCart({
+      id: product.id,
+      name: product.name,
+      size: "L", // default size
+      color: "Standard",
+      price: product.price,
+      quantity: 1,
+      image: product.image,
+    });
+    alert(`${product.name} added to cart!`);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -79,25 +96,35 @@ function ShopContent() {
       {/* Product Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
-          <Link key={product.id} href={`/shop/${product.id}`} className="group cursor-pointer space-y-3 block">
-            <div className="aspect-[4/5] bg-neutral-100 relative overflow-hidden">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              />
-              <span className="absolute top-2 left-2 bg-black text-white text-[10px] uppercase px-2 py-1 tracking-widest font-bold">
-                New
-              </span>
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-neutral-900 group-hover:underline">{product.name}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="font-bold text-sm">₹{product.price}</span>
-                <span className="text-xs text-neutral-400 line-through">₹{product.originalPrice}</span>
+          <div key={product.id} className="group relative flex flex-col justify-between space-y-3">
+            <Link href={`/shop/${product.id}`} className="block space-y-3">
+              <div className="aspect-[4/5] bg-neutral-100 relative overflow-hidden">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                />
+                <span className="absolute top-2 left-2 bg-black text-white text-[10px] uppercase px-2 py-1 tracking-widest font-bold">
+                  New
+                </span>
               </div>
-            </div>
-          </Link>
+              <div>
+                <h3 className="font-bold text-sm text-neutral-900 group-hover:underline">{product.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-bold text-sm">₹{product.price}</span>
+                  <span className="text-xs text-neutral-400 line-through">₹{product.originalPrice}</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Quick Add Button */}
+            <button
+              onClick={(e) => handleQuickAdd(product, e)}
+              className="w-full bg-black text-white text-xs uppercase tracking-widest py-2.5 font-bold hover:bg-neutral-800 transition flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart
+            </button>
+          </div>
         ))}
       </div>
     </div>
