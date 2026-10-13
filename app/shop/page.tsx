@@ -86,8 +86,19 @@ export default function ShopPage() {
                     <img
                       src={displayImage}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition duration-500 ${
+                        product.inStock === false ? "opacity-50 grayscale" : ""
+                      }`}
                     />
+                    {product.inStock === false ? (
+                      <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1">
+                        OUT OF STOCK
+                      </span>
+                    ) : (
+                      <span className="absolute top-3 left-3 bg-[#FF5500] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1">
+                        NEW DROP
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
