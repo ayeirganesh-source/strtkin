@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Package, ShoppingBag, DollarSign, CheckCircle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Package, ShoppingBag } from "lucide-react";
 import { getStoredProducts, saveStoredProducts } from "@/app/lib/products";
 
 export default function AdminPage() {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"orders" | "products">("orders");
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -19,10 +20,10 @@ export default function AdminPage() {
   const [images, setImages] = useState("");
 
   const loadAdminData = () => {
-    // Load products
+    // Load products safely
     setProducts(getStoredProducts());
 
-    // Load orders
+    // Load orders safely
     if (typeof window !== "undefined") {
       const storedOrders = localStorage.getItem("strtkin_orders");
       if (storedOrders) {
@@ -32,11 +33,10 @@ export default function AdminPage() {
           setOrders([]);
         }
       } else {
-        // Fallback sample order if empty
         setOrders([
           {
             id: "ORD-1001",
-            date: new Date().toLocaleDateString(),
+            date: "Today",
             customer: "Arjun Verma",
             phone: "+91 98765 43210",
             address: "Bandra West, Mumbai, MH",
@@ -50,6 +50,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     loadAdminData();
 
     window.addEventListener("strtkin_products_updated", loadAdminData);
@@ -60,6 +61,16 @@ export default function AdminPage() {
       window.removeEventListener("storage", loadAdminData);
     };
   }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
+          LOADING ADMIN CONTROL CENTER...
+        </p>
+      </div>
+    );
+  }
 
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +116,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-black text-white font-sans selection:bg-[#FF5500] selection:text-white pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         
-        {/* Header Control Header */}
+        {/* Header Control Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-neutral-800 pb-6 gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -125,7 +136,7 @@ export default function AdminPage() {
             </h1>
           </div>
 
-          {/* Tab Navigation Buttons */}
+          {/* Navigation Tabs */}
           <div className="flex items-center gap-2 bg-neutral-950 p-1 border border-neutral-800">
             <button
               onClick={() => setActiveTab("orders")}
@@ -151,10 +162,9 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* ================= ORDERS TAB ================= */}
+        {/* ORDERS TAB */}
         {activeTab === "orders" && (
           <div className="space-y-6">
-            {/* Metrics Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="border border-neutral-800 bg-neutral-950 p-5 space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
@@ -176,7 +186,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Orders Table/List */}
             {orders.length === 0 ? (
               <div className="py-20 text-center border border-neutral-800 bg-neutral-950">
                 <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
@@ -229,11 +238,10 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ================= PRODUCTS TAB ================= */}
+        {/* PRODUCTS TAB */}
         {activeTab === "products" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             
-            {/* Create Product Form */}
             <div className="border border-neutral-800 bg-neutral-950 p-6 space-y-5">
               <div className="border-b border-neutral-800 pb-3">
                 <span className="text-xs font-black uppercase tracking-widest text-[#FF5500]">
@@ -327,7 +335,6 @@ export default function AdminPage() {
               </form>
             </div>
 
-            {/* Existing Products List */}
             <div className="lg:col-span-2 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-2">
                 ACTIVE STORE PRODUCTS ({products.length})
