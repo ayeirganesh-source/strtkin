@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Package,
   X,
+  Upload,
 } from "lucide-react";
 
 const DEFAULT_PRODUCTS = [
@@ -83,7 +84,6 @@ export default function AdminDashboardPage() {
 
   // Load Orders & Products from LocalStorage
   useEffect(() => {
-    // Orders
     const savedOrders = localStorage.getItem("strtkin_orders");
     if (savedOrders) {
       try {
@@ -93,7 +93,6 @@ export default function AdminDashboardPage() {
       }
     }
 
-    // Products
     const savedProducts = localStorage.getItem("strtkin_products");
     if (savedProducts) {
       try {
@@ -139,7 +138,7 @@ export default function AdminDashboardPage() {
       originalPrice: "",
       description: "",
       sizes: "S, M, L, XL",
-      image: "",
+      image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60",
     });
     setIsModalOpen(true);
   };
@@ -156,6 +155,18 @@ export default function AdminDashboardPage() {
       image: product.image,
     });
     setIsModalOpen(true);
+  };
+
+  // Handle Image File Upload from Laptop / Phone
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -245,7 +256,6 @@ export default function AdminDashboardPage() {
         {/* TAB 1: ORDERS MANAGEMENT */}
         {activeAdminTab === "ORDERS" && (
           <div className="space-y-6">
-            {/* Filter Buttons */}
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setOrderFilter("ALL")}
@@ -279,7 +289,6 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
-            {/* Orders List */}
             {filteredOrders.length === 0 ? (
               <div className="border border-neutral-800 bg-neutral-900/40 p-16 text-center space-y-3">
                 <PackageCheck className="w-10 h-10 text-neutral-600 mx-auto" />
@@ -443,10 +452,10 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* EDIT / ADD PRODUCT MODAL */}
+        {/* EDIT / ADD PRODUCT MODAL WITH FILE UPLOADER */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white">
+            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-4 right-4 text-neutral-400 hover:text-white"
@@ -505,18 +514,28 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
+                {/* File Upload from Device */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Image URL
+                    Upload Product Image (From Laptop / Phone)
                   </label>
-                  <input
-                    type="url"
-                    required
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                    placeholder="https://images.unsplash.com/..."
-                  />
+                  <div className="flex items-center gap-4">
+                    <label className="flex-1 cursor-pointer bg-neutral-950 border border-dashed border-neutral-700 hover:border-[#FF5500] p-4 text-center transition flex flex-col items-center justify-center gap-1">
+                      <Upload className="w-5 h-5 text-[#FF5500]" />
+                      <span className="text-xs font-bold text-neutral-300">Choose Image File</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    {formData.image && (
+                      <div className="w-16 h-16 bg-neutral-950 border border-neutral-800 overflow-hidden shrink-0">
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
