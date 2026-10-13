@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Package,
   X,
+  Upload,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -23,7 +24,7 @@ export default function AdminDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
 
-  // Products State (Starts empty, no hardcoded defaults)
+  // Products State (Starts empty, fully dynamic)
   const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
@@ -114,6 +115,18 @@ export default function AdminDashboardPage() {
     setIsModalOpen(true);
   };
 
+  // Handle local file upload from computer using FileReader
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleDeleteProduct = (id: string) => {
     const updated = products.filter((p) => p.id !== id);
     setProducts(updated);
@@ -177,21 +190,21 @@ export default function AdminDashboardPage() {
           <div className="flex bg-neutral-900 border border-neutral-800 p-1">
             <button
               onClick={() => setActiveAdminTab("ORDERS")}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+              className={
                 activeAdminTab === "ORDERS"
-                  ? "bg-[#FF5500] text-white shadow-lg"
-                  : "text-neutral-400 hover:text-white"
-              }`}
+                  ? "flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition bg-[#FF5500] text-white shadow-lg"
+                  : "flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition text-neutral-400 hover:text-white"
+              }
             >
               <ShoppingBag className="w-4 h-4" /> Orders ({orders.length})
             </button>
             <button
               onClick={() => setActiveAdminTab("PRODUCTS")}
-              className={`flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition ${
+              className={
                 activeAdminTab === "PRODUCTS"
-                  ? "bg-[#FF5500] text-white shadow-lg"
-                  : "text-neutral-400 hover:text-white"
-              }`}
+                  ? "flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition bg-[#FF5500] text-white shadow-lg"
+                  : "flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest transition text-neutral-400 hover:text-white"
+              }
             >
               <Package className="w-4 h-4" /> Products ({products.length})
             </button>
@@ -205,31 +218,31 @@ export default function AdminDashboardPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setOrderFilter("ALL")}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
+                className={
                   orderFilter === "ALL"
-                    ? "bg-white text-black border-white"
-                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
-                }`}
+                    ? "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-white text-black border-white"
+                    : "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }
               >
                 All Orders ({orders.length})
               </button>
               <button
                 onClick={() => setOrderFilter("PENDING")}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
+                className={
                   orderFilter === "PENDING"
-                    ? "bg-white text-black border-white"
-                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
-                }`}
+                    ? "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-white text-black border-white"
+                    : "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }
               >
                 Pending Verification
               </button>
               <button
                 onClick={() => setOrderFilter("CONFIRMED")}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition border ${
+                className={
                   orderFilter === "CONFIRMED"
-                    ? "bg-white text-black border-white"
-                    : "bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
-                }`}
+                    ? "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-white text-black border-white"
+                    : "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }
               >
                 Confirmed & Forwarded
               </button>
@@ -256,11 +269,11 @@ export default function AdminDashboardPage() {
                           {order.id}
                         </span>
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest ${
+                          className={
                             order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED"
-                              ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                          }`}
+                              ? "inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/30"
+                              : "inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                          }
                         >
                           {order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED" ? (
                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -315,7 +328,7 @@ export default function AdminDashboardPage() {
                         </button>
                       )}
                       <a
-                        href={`tel:${order.customer?.phone}`}
+                        href={"tel:" + order.customer?.phone}
                         className="border border-neutral-700 text-neutral-300 text-xs uppercase tracking-widest px-5 py-2.5 font-bold hover:bg-neutral-800 transition flex items-center gap-2"
                       >
                         <Phone className="w-3.5 h-3.5" /> Call Customer
@@ -408,10 +421,10 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* EDIT / ADD PRODUCT MODAL */}
+        {/* EDIT / ADD PRODUCT MODAL WITH COMPUTER FILE UPLOAD */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white">
+            <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-4 right-4 text-neutral-400 hover:text-white"
@@ -470,18 +483,30 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
+                {/* COMPUTER FILE UPLOAD */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                    Image URL
+                    Upload Product Image from Computer
                   </label>
-                  <input
-                    type="url"
-                    required
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 p-3 text-sm text-white focus:outline-none focus:border-[#FF5500]"
-                    placeholder="https://images.unsplash.com/..."
-                  />
+                  <div className="flex items-center gap-3 bg-neutral-950 border border-neutral-800 p-3">
+                    <label className="cursor-pointer bg-neutral-800 hover:bg-[#FF5500] text-white text-xs uppercase font-bold px-4 py-2 transition flex items-center gap-2">
+                      <Upload className="w-3.5 h-3.5" /> Choose File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-xs text-neutral-400 truncate">
+                      {formData.image ? "Image loaded successfully ✓" : "No file chosen"}
+                    </span>
+                  </div>
+                  {formData.image && (
+                    <div className="mt-2 w-20 h-20 border border-neutral-800 relative overflow-hidden">
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
 
                 <div>
