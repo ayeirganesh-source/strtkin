@@ -15,6 +15,7 @@ import {
   Package,
   X,
   Upload,
+  Check,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -22,7 +23,7 @@ export default function AdminDashboardPage() {
 
   // Orders State
   const [orders, setOrders] = useState<any[]>([]);
-  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED">("ALL");
+  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "COMPLETED">("ALL");
 
   // Products State
   const [products, setProducts] = useState<any[]>([]);
@@ -70,6 +71,20 @@ export default function AdminDashboardPage() {
     );
     setOrders(updated);
     localStorage.setItem("strtkin_orders", JSON.stringify(updated));
+
+    // Also sync status update to customer order history if stored
+    const savedUserOrders = localStorage.getItem("strtkin_user_orders");
+    if (savedUserOrders) {
+      try {
+        const userOrders = JSON.parse(savedUserOrders);
+        const updatedUserOrders = userOrders.map((ord: any) =>
+          ord.id === id ? { ...ord, status: newStatus } : ord
+        );
+        localStorage.setItem("strtkin_user_orders", JSON.stringify(updatedUserOrders));
+      } catch (e) {
+        console.error("Failed to sync customer order status", e);
+      }
+    }
   };
 
   const handleDeleteOrder = (id: string) => {
@@ -79,8 +94,9 @@ export default function AdminDashboardPage() {
   };
 
   const filteredOrders = orders.filter((order) => {
-    if (orderFilter === "PENDING") return order.status !== "CONFIRMED & FORWARDED" && order.status !== "CONFIRMED";
-    if (orderFilter === "CONFIRMED") return order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED";
+    if (orderFilter === "PENDING") return order.status?.includes("PENDING");
+    if (orderFilter === "CONFIRMED") return order.status?.includes("CONFIRMED");
+    if (orderFilter === "COMPLETED") return order.status?.includes("COMPLETED");
     return true;
   });
 
@@ -114,7 +130,6 @@ export default function AdminDashboardPage() {
     setIsModalOpen(true);
   };
 
-  // Handle multiple local computer file selections
   const handleMultipleImageFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -146,7 +161,6 @@ export default function AdminDashboardPage() {
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-
     const primaryImage = formData.images[0] || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=60";
 
     const formattedProduct = {
@@ -247,7 +261,7 @@ export default function AdminDashboardPage() {
                     : "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
                 }
               >
-                Pending Verification
+                Pending
               </button>
               <button
                 onClick={() => setOrderFilter("CONFIRMED")}
@@ -257,7 +271,17 @@ export default function AdminDashboardPage() {
                     : "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
                 }
               >
-                Confirmed & Forwarded
+                Confirmed
+              </button>
+              <button
+                onClick={() => setOrderFilter("COMPLETED")}
+                className={
+                  orderFilter === "COMPLETED"
+                    ? "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-white text-black border-white"
+                    : "px-4 py-2 text-xs font-bold uppercase tracking-wider transition border bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600"
+                }
+              >
+                Completed
               </button>
             </div>
 
@@ -282,12 +306,16 @@ export default function AdminDashboardPage() {
                         </span>
                         <span
                           className={
-                            order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED"
+                            order.status?.includes("COMPLETED")
+                              ? "inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                              : order.status?.includes("CONFIRMED")
                               ? "inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/30"
                               : "inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/30"
                           }
                         >
-                          {order.status === "CONFIRMED & FORWARDED" || order.status === "CONFIRMED" ? (
+                          {order.status?.includes("COMPLETED") ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : order.status?.includes("CONFIRMED") ? (
                             <CheckCircle2 className="w-3.5 h-3.5" />
                           ) : (
                             <Clock className="w-3.5 h-3.5" />
@@ -331,12 +359,20 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-3 pt-2">
-                      {order.status !== "CONFIRMED & FORWARDED" && order.status !== "CONFIRMED" && (
+                      {!order.status?.includes("CONFIRMED") && !order.status?.includes("COMPLETED") && (
                         <button
                           onClick={() => updateOrderStatus(order.id, "CONFIRMED & FORWARDED")}
                           className="bg-[#FF5500] text-white text-xs uppercase tracking-widest px-5 py-2.5 font-extrabold hover:bg-[#e04b00] transition flex items-center gap-2"
                         >
                           <CheckCircle2 className="w-4 h-4" /> Confirm Order
+                        </button>
+                      )}
+                      {!order.status?.includes("COMPLETED") && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, "COMPLETED ✓")}
+                          className="bg-emerald-600 text-white text-xs uppercase tracking-widest px-5 py-2.5 font-extrabold hover:bg-emerald-500 transition flex items-center gap-2"
+                        >
+                          <Check className="w-4 h-4" /> Mark as Completed
                         </button>
                       )}
                       <a
@@ -433,7 +469,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* EDIT / ADD PRODUCT MODAL WITH MULTIPLE IMAGES UPLOAD */}
+        {/* EDIT / ADD PRODUCT MODAL */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 space-y-6 relative text-white max-h-[90vh] overflow-y-auto">
@@ -495,7 +531,6 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* MULTIPLE IMAGES COMPUTER UPLOAD */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
                     Upload Multiple Product Images from Computer
@@ -516,7 +551,6 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
 
-                  {/* Thumbnails Preview Grid */}
                   {formData.images.length > 0 && (
                     <div className="grid grid-cols-4 gap-2 mt-3">
                       {formData.images.map((imgSrc, idx) => (
